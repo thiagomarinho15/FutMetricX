@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from '_team_logo.html' import logo as team_logo_widget %}
 {% block title %}{{ partida.time_casa }} × {{ partida.time_visitante }} — FutMetricX{% endblock %}
 
 {% block extra_css %}
@@ -17,13 +18,21 @@
     </div>
 
     <div class="partida-placar">
-      <span class="partida-time">{{ partida.time_casa }}</span>
+      <div class="partida-time-block">
+        {{ team_logo_widget(partida.time_casa, 'lg') }}
+        <span class="partida-time">{{ partida.time_casa }}</span>
+      </div>
+
       {% if partida.status == 'encerrada' and stats.get('placar_casa') is not none %}
       <span class="placar-numero">{{ stats.placar_casa }} – {{ stats.placar_visitante }}</span>
       {% else %}
       <span class="placar-vs">vs</span>
       {% endif %}
-      <span class="partida-time">{{ partida.time_visitante }}</span>
+
+      <div class="partida-time-block">
+        {{ team_logo_widget(partida.time_visitante, 'lg') }}
+        <span class="partida-time">{{ partida.time_visitante }}</span>
+      </div>
     </div>
 
     {% if partida.data_partida %}

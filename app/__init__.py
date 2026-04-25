@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from .config import Config
 from .models import db, User
 from .adm import init_admin
+from .services.team_logos import team_logo, team_initial, team_color
 
 login_manager = LoginManager()
 migrate = Migrate()
@@ -23,6 +24,12 @@ def create_app():
 
     init_admin(app)
 
+    app.jinja_env.globals.update(
+        team_logo=team_logo,
+        team_initial=team_initial,
+        team_color=team_color,
+    )
+
     from .views import bp
     app.register_blueprint(bp)
 
@@ -35,7 +42,8 @@ def create_app():
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; "
-            "font-src 'self' https://fonts.gstatic.com;"
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https://upload.wikimedia.org;"
         )
         return response
 

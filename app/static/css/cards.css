@@ -71,14 +71,59 @@
   gap: 0.5rem;
 }
 
-.team-name {
+/* ── Team logo avatar ─────────────────────────── */
+.team-logo-wrap {
+  position: relative;
+  border-radius: 50%;
+  background: var(--team-color, #2d6a4f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   font-weight: 700;
-  font-size: 0.9rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.team-logo-wrap::after {
+  content: attr(data-initial);
+  position: absolute;
+  font-size: inherit;
+}
+.team-logo-wrap img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+  padding: 10%;
+  z-index: 1;
+  border-radius: 50%;
+}
+.team-logo-wrap.logo-error img { display: none; }
+
+.team-logo-sm { width: 32px; height: 32px; font-size: 0.6rem; }
+.team-logo-lg { width: 56px; height: 56px; font-size: 0.85rem; }
+
+/* ── Team with logo row ───────────────────────── */
+.team-with-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex: 1;
+  min-width: 0;
+}
+.team-with-logo.team-visitante {
+  flex-direction: row-reverse;
+  text-align: right;
 }
 
-.team-name:last-child {
-  text-align: right;
+.team-name {
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-score {
@@ -164,16 +209,20 @@
   margin-bottom: 1rem;
 }
 
-.partida-time {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--texto-escuro);
+.partida-time-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
   flex: 1;
-  max-width: 200px;
+  max-width: 180px;
 }
 
-.partida-time:first-child {
-  text-align: right;
+.partida-time {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--texto-escuro);
+  text-align: center;
 }
 
 .placar-numero {

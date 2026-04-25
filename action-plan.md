@@ -322,7 +322,7 @@ GET  /admin/                    → Painel admin (role=admin)
 - [x] CSS: `cards.css` — card com placar, badge de status, filter bar, página de detalhe
 - [x] JS: `cards.js` — filtro client-side por competição
 - [x] Testar: `docker compose down -v && docker compose up --build` — 40 partidas importadas (Premier League 2003/04 + La Liga + CL), dashboard com cards e filtro por competição funcionais (2026-04-25)
-- [ ] **Escudos das equipes**: adicionar campo `escudo_url` em Partida (ou Jogador), popular com URLs de API de escudos (ex: API-Football ou arquivo estático), exibir nos cards do dashboard e no cabeçalho da `partida.html`
+- [x] **Escudos das equipes**: `app/services/team_logos.py` com mapeamento de 30 clubes → Wikipedia Commons SVG; avatar CSS circular com iniciais como fallback; exibido nos cards (32px) e cabeçalho da partida (56px); CSP atualizada para `img-src` Wikimedia (2026-04-25)
 
 ### Fase 2 — Motor LLM
 - [x] **Passo 0:** Chaves LLM adicionadas ao `.env` local (Groq ×3, Gemini ×3, Ollama local)
@@ -446,4 +446,4 @@ WTForms==3.1.2
 
 ---
 
-*Última atualização: 2026-04-25 — Fase 0 ✅ + Fase 1 ✅ concluídas e testadas. App em http://localhost:8000 com 40 partidas reais (StatsBomb), dashboard com filtro por competição, página de detalhe por partida. Próximo: Fase 2 (Motor LLM — Groq/Gemini/Ollama + streaming SSE).*
+*Última atualização: 2026-04-25 — Fase 0 ✅ + Fase 1 ✅ (incluindo escudos) concluídas e testadas. App em http://localhost:8000 com 40 partidas reais, escudos dos times com fallback CSS. Próximo: Fase 2 (Motor LLM — Groq/Gemini/Ollama + streaming SSE).*

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from '_team_logo.html' import logo as team_logo_widget %}
 {% block title %}Partidas — FutMetricX{% endblock %}
 
 {% block extra_css %}
@@ -31,13 +32,19 @@
         {{ p.competicao }}{% if p.rodada %} · Rodada {{ p.rodada }}{% endif %}
       </div>
       <div class="card-teams">
-        <span class="team-name">{{ p.time_casa }}</span>
+        <div class="team-with-logo">
+          {{ team_logo_widget(p.time_casa) }}
+          <span class="team-name">{{ p.time_casa }}</span>
+        </div>
         {% if p.status == 'encerrada' and stats.get('placar_casa') is not none %}
         <span class="card-score">{{ stats.placar_casa }} – {{ stats.placar_visitante }}</span>
         {% else %}
         <span class="card-vs">vs</span>
         {% endif %}
-        <span class="team-name">{{ p.time_visitante }}</span>
+        <div class="team-with-logo team-visitante">
+          <span class="team-name">{{ p.time_visitante }}</span>
+          {{ team_logo_widget(p.time_visitante) }}
+        </div>
       </div>
       <div class="card-meta">
         {% if p.data_partida %}

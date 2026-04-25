@@ -1,0 +1,13 @@
+{% macro logo(name, size='sm') %}
+{% set _logo = team_logo(name) %}
+{% set _ini  = team_initial(name) %}
+{% set _col  = team_color(name) %}
+<div class="team-logo-wrap team-logo-{{ size }}"
+     data-initial="{{ _ini }}"
+     style="--team-color: {{ _col }}">
+  {% if _logo %}
+  <img src="{{ _logo }}" alt="{{ name }}" loading="lazy"
+       onerror="this.parentElement.classList.add('logo-error')">
+  {% endif %}
+</div>
+{% endmacro %}
