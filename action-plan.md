@@ -295,21 +295,21 @@ GET  /admin/                    → Painel admin (role=admin)
 
 ## Roadmap de Execução
 
-### Fase 0 — Fundação
-- [ ] Criar estrutura de pastas completa
-- [ ] `Dockerfile` + `docker-compose.yml` + `entrypoint.sh`
-- [ ] `.env.example` com todas as variáveis necessárias
-- [ ] `app/__init__.py` — factory, extensões, security headers
-- [ ] `app/config.py` — validação de env vars no startup
-- [ ] `app/models.py` — User, Role, roles_users
-- [ ] `app/security.py` — Argon2
-- [ ] `app/forms.py` — LoginForm, CadastroForm
-- [ ] `app/views.py` — rotas de auth (login, cadastro, logout)
-- [ ] Templates: `base.html`, `login.html`, `cadastro.html`, `_flash_messages.html`
-- [ ] CSS: `style.css` (variáveis), `navbar.css`, `form.css`
-- [ ] `app/adm.py` — Flask-Admin com AdminAccessMixin
-- [ ] `seed.py` — roles padrão + user admin
-- [ ] Testar: `docker compose up` → login funcional
+### Fase 0 — Fundação ✅ CONCLUÍDA
+- [x] Criar estrutura de pastas completa
+- [x] `Dockerfile` + `docker-compose.yml` + `entrypoint.sh`
+- [x] `.env` local com todas as variáveis (nunca commitado; `.env` e `.env.example` no `.gitignore`)
+- [x] `app/__init__.py` — factory, extensões, security headers
+- [x] `app/config.py` — validação de env vars no startup
+- [x] `app/models.py` — User, Role, roles_users
+- [x] `app/security.py` — Argon2
+- [x] `app/forms.py` — LoginForm, CadastroForm
+- [x] `app/views.py` — rotas de auth (login, cadastro, logout)
+- [x] Templates: `base.html`, `login.html`, `cadastro.html`, `_flash_messages.html`
+- [x] CSS: `style.css` (variáveis), `navbar.css`, `form.css`
+- [x] `app/adm.py` — Flask-Admin com AdminAccessMixin
+- [x] `seed.py` — roles padrão + user admin
+- [ ] Testar: `docker compose up` → login funcional (pendente — rodar localmente)
 
 ### Fase 1 — Dados de Futebol
 - [ ] `app/models.py` — adicionar Partida, Jogador
@@ -323,8 +323,8 @@ GET  /admin/                    → Painel admin (role=admin)
 - [ ] Testar: dashboard com dados reais
 
 ### Fase 2 — Motor LLM
-- [ ] **Passo 0:** Thiago adiciona as chaves LLM gratuitas disponíveis ao `.env` local — só então começamos a implementação
-- [ ] Definir providers a implementar e ordem de fallback com base nas chaves disponíveis
+- [x] **Passo 0:** Chaves LLM adicionadas ao `.env` local (Groq ×3, Gemini ×3, Ollama local)
+- [x] Providers definidos: Groq como primário, Gemini como secundário, Ollama como fallback offline
 - [ ] `app/models.py` — adicionar Relatorio
 - [ ] `app/services/report_generator.py` — multi-provider + 5 prompts especializados
 - [ ] Streaming SSE no Flask (padrão ResumeX `summarizer.py`)
@@ -376,11 +376,11 @@ GET  /admin/                    → Painel admin (role=admin)
 
 ---
 
-## Variáveis de Ambiente (.env.example)
+## Variáveis de Ambiente (.env — nunca commitado)
 
 ```env
 # Flask
-SECRET_KEY=gere_uma_chave_segura_aqui
+SECRET_KEY=...
 FLASK_HOST=0.0.0.0
 FLASK_PORT=8000
 FLASK_DEBUG=False
@@ -390,22 +390,31 @@ DB_HOST=db
 DB_PORT=3306
 DB_NAME=futmetricx
 DB_USER=futmetricx_user
-DB_PASSWORD=senha_segura
-DB_ROOT_PASSWORD=senha_root_segura
-
-# LLM — chaves adicionadas manualmente no início da Fase 2
-# Não commitar este arquivo com chaves reais
-# LLM_PROVIDER_1_KEY=
-# LLM_PROVIDER_2_KEY=
-# LLM_PROVIDER_3_KEY=
-# (providers e nomes de variável definidos na Fase 2)
+DB_PASSWORD=...
+DB_ROOT_PASSWORD=...
 
 # Sessão
 SESSION_COOKIE_SECURE=False   # True em produção (HTTPS)
 
 # Admin
-ADMIN_EMAIL=admin@futmetricx.com
-ADMIN_PASSWORD=senha_admin_inicial
+ADMIN_EMAIL=...
+ADMIN_PASSWORD=...
+
+# Groq (primário)
+GROQ_KEY_1=...
+GROQ_KEY_2=...
+GROQ_KEY_3=...
+GROQ_MODEL=llama-3.3-70b-versatile
+
+# Gemini (secundário)
+GEMINI_KEY_1=...
+GEMINI_KEY_2=...
+GEMINI_KEY_3=...
+GEMINI_MODEL=gemini-2.0-flash
+
+# Ollama (fallback local)
+OLLAMA_HOST=host.docker.internal
+OLLAMA_MODEL=llama3.2
 ```
 
 ---
@@ -413,26 +422,26 @@ ADMIN_PASSWORD=senha_admin_inicial
 ## Dependências (requirements.txt)
 
 ```
-flask
-flask-sqlalchemy
-flask-migrate
-flask-login
-flask-security-too
-flask-wtf
-flask-admin
-flask-limiter
-argon2-cffi
-mysqlclient
-# LLM providers — lista final definida na Fase 2 conforme chaves disponíveis
-# anthropic / groq / google-generativeai / mistralai / ollama / etc.
-statsbombpy
-feedparser
-apscheduler
-gunicorn
-python-dotenv
-email-validator
+flask==3.1.0
+flask-sqlalchemy==3.1.1
+flask-migrate==4.0.7
+flask-login==0.6.3
+flask-security-too==5.5.2
+flask-wtf==1.2.1
+flask-admin==1.6.1
+argon2-cffi==23.1.0
+mysqlclient==2.2.4
+groq==0.13.1
+google-generativeai==0.8.3
+statsbombpy==1.1.3
+feedparser==6.0.11
+apscheduler==3.10.4
+gunicorn==23.0.0
+python-dotenv==1.0.1
+email-validator==2.1.2
+WTForms==3.1.2
 ```
 
 ---
 
-*Última atualização: Fase 0 pendente — início de desenvolvimento. Fase 2 aguarda adição manual das chaves LLM ao .env.*
+*Última atualização: 2026-04-25 — Fase 0 concluída (falta apenas testar `docker compose up`). Chaves LLM no `.env` local. Próximo: Fase 1 (dados de futebol).*
