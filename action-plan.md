@@ -189,8 +189,15 @@ volumes:
 
 ---
 
-## Integração Claude API
+## Motor LLM — Multi-provider
 
+O motor de geração de relatórios suportará múltiplos provedores de LLM, seguindo o padrão do `summarizer.py` do ResumeX. As chaves gratuitas disponíveis serão adicionadas manualmente ao `.env` no início da Fase 2 — nenhuma chave será definida antes disso nem commitada no repositório.
+
+**Providers planejados** (definição final na Fase 2):
+- Provedores gratuitos com chaves disponíveis: a confirmar no início da Fase 2
+- Fallback local via Ollama (sem chave, offline)
+
+**Arquitetura do `report_generator.py`** (padrão `summarizer.py` do ResumeX):
 ```python
 # app/services/report_generator.py
 
@@ -204,17 +211,19 @@ PROMPTS = {
     'impacto_noticia':   "Extraia contexto extra-campo relevante para o próximo relatório...",
 }
 
-# Streaming via SSE (padrão ResumeX/summarizer.py):
-def gerar_relatorio_stream(tipo, contexto):
-    client = anthropic.Anthropic()
-    with client.messages.stream(
-        model="claude-sonnet-4-6",
-        max_tokens=1500,
-        messages=[{"role": "user", "content": montar_prompt(tipo, contexto)}]
-    ) as stream:
-        for text in stream.text_stream:
-            yield f"data: {text}\n\n"
+# Streaming via SSE — provider selecionado por parâmetro:
+def gerar_relatorio_stream(tipo, contexto, provider):
+    prompt = montar_prompt(tipo, contexto)
+    if provider == "groq":
+        yield from _stream_groq(prompt)
+    elif provider == "gemini":
+        yield from _stream_gemini(prompt)
+    elif provider == "ollama":
+        yield from _stream_ollama(prompt)
+    # ... demais providers adicionados na Fase 2
 ```
+
+> **Fase 2 — Passo 0 (antes de qualquer código LLM):** Thiago adiciona as chaves disponíveis ao `.env` local. A partir das chaves presentes, definimos quais providers implementar e a ordem de fallback.
 
 ---
 
@@ -314,8 +323,10 @@ GET  /admin/                    → Painel admin (role=admin)
 - [ ] Testar: dashboard com dados reais
 
 ### Fase 2 — Motor LLM
+- [ ] **Passo 0:** Thiago adiciona as chaves LLM gratuitas disponíveis ao `.env` local — só então começamos a implementação
+- [ ] Definir providers a implementar e ordem de fallback com base nas chaves disponíveis
 - [ ] `app/models.py` — adicionar Relatorio
-- [ ] `app/services/report_generator.py` — Claude API + 5 prompts especializados
+- [ ] `app/services/report_generator.py` — multi-provider + 5 prompts especializados
 - [ ] Streaming SSE no Flask (padrão ResumeX `summarizer.py`)
 - [ ] `report.js` — consome SSE, renderiza output progressivo
 - [ ] Loading bar durante geração
@@ -382,8 +393,12 @@ DB_USER=futmetricx_user
 DB_PASSWORD=senha_segura
 DB_ROOT_PASSWORD=senha_root_segura
 
-# Claude API
-ANTHROPIC_API_KEY=sk-ant-...
+# LLM — chaves adicionadas manualmente no início da Fase 2
+# Não commitar este arquivo com chaves reais
+# LLM_PROVIDER_1_KEY=
+# LLM_PROVIDER_2_KEY=
+# LLM_PROVIDER_3_KEY=
+# (providers e nomes de variável definidos na Fase 2)
 
 # Sessão
 SESSION_COOKIE_SECURE=False   # True em produção (HTTPS)
@@ -408,7 +423,8 @@ flask-admin
 flask-limiter
 argon2-cffi
 mysqlclient
-anthropic
+# LLM providers — lista final definida na Fase 2 conforme chaves disponíveis
+# anthropic / groq / google-generativeai / mistralai / ollama / etc.
 statsbombpy
 feedparser
 apscheduler
@@ -419,4 +435,4 @@ email-validator
 
 ---
 
-*Última atualização: Fase 0 pendente — início de desenvolvimento.*
+*Última atualização: Fase 0 pendente — início de desenvolvimento. Fase 2 aguarda adição manual das chaves LLM ao .env.*
