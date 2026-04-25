@@ -1,0 +1,10 @@
+migrations/
+.env
+.env.example
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.claude/
+action-plan.md
+*.md

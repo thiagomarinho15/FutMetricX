@@ -6,6 +6,7 @@ load_dotenv()
 from app import create_app
 from app.models import db, User, Role
 from app.security import hash_senha
+from app.services.data_fetcher import popular_partidas_iniciais
 
 app = create_app()
 
@@ -33,4 +34,8 @@ with app.app_context():
         db.session.add(admin_user)
 
     db.session.commit()
+    print('Seed de usuários/roles concluído.')
+
+    print('Importando partidas do StatsBomb Open Data...')
+    popular_partidas_iniciais()
     print('Seed concluído.')

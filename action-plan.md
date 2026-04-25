@@ -312,15 +312,16 @@ GET  /admin/                    → Painel admin (role=admin)
 - [x] Testar: `docker compose up` → login funcional ✅ (testado em 2026-04-25)
 
 ### Fase 1 — Dados de Futebol
-- [ ] `app/models.py` — adicionar Partida, Jogador
-- [ ] `app/services/data_fetcher.py` — StatsBomb Open Data (Premier League + Brasileirão)
-- [ ] `app/services/data_fetcher.py` — FBref (estatísticas de jogadores)
-- [ ] Migration: tabelas Partida e Jogador
-- [ ] `seed.py` — popular com partidas e jogadores reais da temporada atual
-- [ ] Admin: views para Partida e Jogador
-- [ ] Rota `GET /` — listar próximas partidas com cards
-- [ ] CSS: `cards.css` — card de partida com times, data, competição
-- [ ] Testar: dashboard com dados reais
+- [x] `app/models.py` — adicionar Partida, Jogador
+- [x] `app/services/data_fetcher.py` — StatsBomb Open Data (La Liga + Champions League + Premier League, temporada mais recente de cada)
+- [x] Migration: tabelas Partida e Jogador (geradas automaticamente no `docker compose up --build`)
+- [x] `seed.py` — chama `popular_partidas_iniciais()` no primeiro boot (idempotente)
+- [x] Admin: views para Partida e Jogador (`PartidaAdmin`, `JogadorAdmin` em `adm.py`)
+- [x] Rota `GET /` — lista partidas com cards e filtro por competição
+- [x] Rota `GET /partida/<id>` — página de detalhe da partida (placeholder LLM)
+- [x] CSS: `cards.css` — card com placar, badge de status, filter bar, página de detalhe
+- [x] JS: `cards.js` — filtro client-side por competição
+- [x] Testar: `docker compose down -v && docker compose up --build` — 40 partidas importadas (Premier League 2003/04 + La Liga + CL), dashboard com cards e filtro por competição funcionais (2026-04-25)
 
 ### Fase 2 — Motor LLM
 - [x] **Passo 0:** Chaves LLM adicionadas ao `.env` local (Groq ×3, Gemini ×3, Ollama local)
@@ -444,4 +445,4 @@ WTForms==3.1.2
 
 ---
 
-*Última atualização: 2026-04-25 — Fase 0 100% concluída e testada. App rodando em `docker compose up --build`. Próximo: Fase 1 (dados de futebol).*
+*Última atualização: 2026-04-25 — Fase 0 ✅ + Fase 1 ✅ concluídas e testadas. App em http://localhost:8000 com 40 partidas reais (StatsBomb), dashboard com filtro por competição, página de detalhe por partida. Próximo: Fase 2 (Motor LLM — Groq/Gemini/Ollama + streaming SSE).*

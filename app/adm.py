@@ -3,7 +3,7 @@ from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 
-from .models import db, User, Role
+from .models import db, User, Role, Partida, Jogador
 
 
 class AdminAccessMixin:
@@ -32,6 +32,20 @@ class RoleAdmin(AdminAccessMixin, ModelView):
     column_list = ('id', 'name', 'description')
 
 
+class PartidaAdmin(AdminAccessMixin, ModelView):
+    column_list = ('id', 'competicao', 'temporada', 'rodada', 'time_casa', 'time_visitante', 'data_partida', 'status')
+    column_searchable_list = ('time_casa', 'time_visitante', 'competicao')
+    column_filters = ('competicao', 'temporada', 'status')
+    column_default_sort = ('data_partida', True)
+    can_create = False
+
+
+class JogadorAdmin(AdminAccessMixin, ModelView):
+    column_list = ('id', 'nome', 'time_atual', 'posicao', 'nacionalidade', 'temporada', 'ativo')
+    column_searchable_list = ('nome', 'time_atual')
+    column_filters = ('ativo', 'posicao', 'temporada')
+
+
 def init_admin(app):
     admin = Admin(
         app,
@@ -41,4 +55,6 @@ def init_admin(app):
     )
     admin.add_view(UserAdmin(User, db.session, name='Usuários'))
     admin.add_view(RoleAdmin(Role, db.session, name='Roles'))
+    admin.add_view(PartidaAdmin(Partida, db.session, name='Partidas'))
+    admin.add_view(JogadorAdmin(Jogador, db.session, name='Jogadores'))
     return admin

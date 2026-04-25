@@ -35,3 +35,38 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f'<User {self.email}>'
+
+
+class Partida(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    statsbomb_id = db.Column(db.Integer, unique=True)
+    time_casa = db.Column(db.String(100), nullable=False)
+    time_visitante = db.Column(db.String(100), nullable=False)
+    competicao = db.Column(db.String(100), nullable=False)
+    temporada = db.Column(db.String(20), nullable=False)
+    rodada = db.Column(db.Integer)
+    data_partida = db.Column(db.DateTime)
+    status = db.Column(db.String(20), default='agendada')  # agendada | encerrada
+    stats_json = db.Column(db.Text)
+
+    def stats(self):
+        import json
+        return json.loads(self.stats_json) if self.stats_json else {}
+
+    def __repr__(self):
+        return f'<Partida {self.time_casa} x {self.time_visitante}>'
+
+
+class Jogador(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    statsbomb_id = db.Column(db.Integer, unique=True)
+    nome = db.Column(db.String(120), nullable=False)
+    time_atual = db.Column(db.String(100))
+    nacionalidade = db.Column(db.String(80))
+    posicao = db.Column(db.String(50))
+    stats_json = db.Column(db.Text)
+    temporada = db.Column(db.String(20))
+    ativo = db.Column(db.Boolean, default=True)
+
+    def __repr__(self):
+        return f'<Jogador {self.nome}>'

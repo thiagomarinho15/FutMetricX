@@ -7,7 +7,7 @@ from flask import (
 )
 from flask_login import login_user, logout_user, login_required, current_user
 
-from .models import db, User
+from .models import db, User, Partida
 from .forms import LoginForm, CadastroForm
 from .security import hash_senha, verificar_senha
 
@@ -105,4 +105,12 @@ def sair():
 
 @bp.route('/')
 def index():
-    return render_template('index.html')
+    partidas = Partida.query.order_by(Partida.data_partida.desc()).limit(60).all()
+    competicoes = sorted({p.competicao for p in partidas})
+    return render_template('index.html', partidas=partidas, competicoes=competicoes)
+
+
+@bp.route('/partida/<int:partida_id>')
+def partida(partida_id):
+    p = Partida.query.get_or_404(partida_id)
+    return render_template('partida.html', partida=p)

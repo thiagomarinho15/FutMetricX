@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}{{ partida.time_casa }} × {{ partida.time_visitante }} — FutMetricX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% set stats = partida.stats() %}
+
+  <a href="{{ url_for('main.index') }}" class="btn-back">← Partidas</a>
+
+  <div class="partida-header">
+    <div class="partida-comp">
+      {{ partida.competicao }} · {{ partida.temporada }}{% if partida.rodada %} · Rodada {{ partida.rodada }}{% endif %}
+    </div>
+
+    <div class="partida-placar">
+      <span class="partida-time">{{ partida.time_casa }}</span>
+      {% if partida.status == 'encerrada' and stats.get('placar_casa') is not none %}
+      <span class="placar-numero">{{ stats.placar_casa }} – {{ stats.placar_visitante }}</span>
+      {% else %}
+      <span class="placar-vs">vs</span>
+      {% endif %}
+      <span class="partida-time">{{ partida.time_visitante }}</span>
+    </div>
+
+    {% if partida.data_partida %}
+    <div class="partida-data">
+      {{ partida.data_partida.strftime('%d de %B de %Y') }}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="relatorio-section">
+    <div class="modo-toggle">
+      <button class="btn-modo active" data-modo="torcedor">Torcedor</button>
+      <button class="btn-modo" data-modo="profissional">Profissional</button>
+    </div>
+
+    <div class="relatorio-placeholder">
+      <p>Geração de relatórios via IA disponível na <strong>Fase 2</strong>.</p>
+      <p class="text-muted">O motor LLM multi-provider (Groq / Gemini / Ollama) será conectado em seguida.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

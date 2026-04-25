@@ -8,14 +8,58 @@
 {% block content %}
 <div class="container">
   <section class="page-header">
-    <h1>Próximas Partidas</h1>
-    <p class="subtitle">Relatórios pré-jogo gerados por IA, em dois modos.</p>
+    <h1>Partidas</h1>
+    <p class="subtitle">Relatórios gerados por IA — Modo Torcedor e Modo Profissional.</p>
   </section>
 
+  {% if competicoes %}
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">Todas</button>
+    {% for comp in competicoes %}
+    <button class="filter-btn" data-filter="{{ comp }}">{{ comp }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if partidas %}
+  <div class="cards-grid" id="cards-grid">
+    {% for p in partidas %}
+    {% set stats = p.stats() %}
+    <a href="{{ url_for('main.partida', partida_id=p.id) }}"
+       class="card" data-competition="{{ p.competicao }}">
+      <div class="card-competition">
+        {{ p.competicao }}{% if p.rodada %} · Rodada {{ p.rodada }}{% endif %}
+      </div>
+      <div class="card-teams">
+        <span class="team-name">{{ p.time_casa }}</span>
+        {% if p.status == 'encerrada' and stats.get('placar_casa') is not none %}
+        <span class="card-score">{{ stats.placar_casa }} – {{ stats.placar_visitante }}</span>
+        {% else %}
+        <span class="card-vs">vs</span>
+        {% endif %}
+        <span class="team-name">{{ p.time_visitante }}</span>
+      </div>
+      <div class="card-meta">
+        {% if p.data_partida %}
+        <span>{{ p.data_partida.strftime('%d %b %Y') }}</span>
+        {% endif %}
+        <span class="status-badge status-{{ p.status }}">
+          {{ 'Encerrada' if p.status == 'encerrada' else 'Agendada' }}
+        </span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
   <div class="partidas-placeholder">
     <div class="placeholder-icon">⚽</div>
-    <p>Dados de partidas chegam na <strong>Fase 1</strong>.</p>
-    <p class="text-muted">Fundação rodando — login, cadastro e admin funcionais.</p>
+    <p>Nenhuma partida encontrada no banco de dados.</p>
+    <p class="text-muted">Execute o seed para importar dados do StatsBomb.</p>
   </div>
+  {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/cards.js') }}"></script>
 {% endblock %}
