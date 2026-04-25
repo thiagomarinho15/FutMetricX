@@ -309,7 +309,7 @@ GET  /admin/                    → Painel admin (role=admin)
 - [x] CSS: `style.css` (variáveis), `navbar.css`, `form.css`
 - [x] `app/adm.py` — Flask-Admin com AdminAccessMixin
 - [x] `seed.py` — roles padrão + user admin
-- [ ] Testar: `docker compose up` → login funcional (pendente — rodar localmente)
+- [x] Testar: `docker compose up` → login funcional ✅ (testado em 2026-04-25)
 
 ### Fase 1 — Dados de Futebol
 - [ ] `app/models.py` — adicionar Partida, Jogador
@@ -444,4 +444,4 @@ WTForms==3.1.2
 
 ---
 
-*Última atualização: 2026-04-25 — Fase 0 concluída (falta apenas testar `docker compose up`). Chaves LLM no `.env` local. Próximo: Fase 1 (dados de futebol).*
+*Última atualização: 2026-04-25 — Fase 0 100% concluída e testada. App rodando em `docker compose up --build`. Próximo: Fase 1 (dados de futebol).*
