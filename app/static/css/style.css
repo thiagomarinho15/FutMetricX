@@ -1,0 +1,98 @@
+:root {
+  --verde-escuro:   #1a472a;
+  --verde-medio:    #2d6a4f;
+  --verde-claro:    #52b788;
+  --dourado:        #f4a261;
+  --azul-pro:       #285E8E;
+  --fundo:          #f8f9fa;
+  --card-bg:        #ffffff;
+  --texto-escuro:   #333333;
+  --texto-medio:    #555555;
+  --borda:          #e0e0e0;
+  --sombra:         rgba(0, 0, 0, 0.07);
+  --navbar-h:       60px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: var(--fundo);
+  color: var(--texto-escuro);
+  line-height: 1.6;
+}
+
+a { color: var(--verde-medio); text-decoration: none; }
+a:hover { color: var(--verde-claro); }
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.main-content {
+  padding-top: calc(var(--navbar-h) + 1.5rem);
+  min-height: 100vh;
+}
+
+/* Flash messages */
+.flash-container {
+  position: fixed;
+  top: calc(var(--navbar-h) + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(480px, 90vw);
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.flash {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: fadeSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px var(--sombra);
+}
+
+.flash-success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+.flash-danger  { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+.flash-warning { background: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b; }
+.flash-info    { background: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+
+.flash-close {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.125rem; color: inherit; opacity: 0.7; padding: 0 0.25rem;
+}
+.flash-close:hover { opacity: 1; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Page headers */
+.page-header { margin-bottom: 2rem; }
+.page-header h1 { font-size: 1.75rem; font-weight: 700; color: var(--verde-escuro); }
+.subtitle { color: var(--texto-medio); margin-top: 0.25rem; }
+.text-muted { color: var(--texto-medio); font-size: 0.875rem; }
+
+/* Placeholder estado vazio */
+.partidas-placeholder {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--texto-medio);
+}
+.placeholder-icon { font-size: 3rem; margin-bottom: 1rem; }

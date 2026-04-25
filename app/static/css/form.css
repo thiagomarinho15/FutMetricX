@@ -1,0 +1,101 @@
+.form-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem 1rem 4rem;
+}
+
+.form-card {
+  background: var(--card-bg);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 20px var(--sombra);
+}
+
+.form-logo {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.brand-fmx-lg {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  letter-spacing: 2px;
+}
+.form-logo p {
+  color: var(--texto-medio);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.1rem;
+}
+
+.field-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--texto-escuro);
+}
+
+.field-group input {
+  padding: 0.65rem 0.875rem;
+  border: 1.5px solid var(--borda);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--texto-escuro);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: #fff;
+}
+.field-group input:focus {
+  outline: none;
+  border-color: var(--verde-claro);
+  box-shadow: 0 0 0 3px rgba(82,183,136,0.15);
+}
+
+.field-error {
+  font-size: 0.78rem;
+  color: #dc2626;
+}
+
+.field-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--texto-medio);
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--verde-escuro);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-submit:hover { background: var(--verde-medio); }
+.btn-submit:active { transform: scale(0.99); }
+
+.form-footer {
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--texto-medio);
+}
+.form-footer a { font-weight: 600; color: var(--verde-medio); }
+.form-footer a:hover { color: var(--verde-claro); }

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Entrar — FutMetricX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-card">
+    <div class="form-logo">
+      <span class="brand-fmx-lg">FMX</span>
+      <p>Futebol com inteligência.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('main.login') }}" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="field-group">
+        {{ form.email.label }}
+        {{ form.email(placeholder='seu@email.com', autocomplete='email') }}
+        {% if form.email.errors %}
+          <span class="field-error">{{ form.email.errors[0] }}</span>
+        {% endif %}
+      </div>
+
+      <div class="field-group">
+        {{ form.senha.label }}
+        {{ form.senha(placeholder='Sua senha', autocomplete='current-password') }}
+        {% if form.senha.errors %}
+          <span class="field-error">{{ form.senha.errors[0] }}</span>
+        {% endif %}
+      </div>
+
+      <div class="field-check">
+        {{ form.lembrar() }}
+        {{ form.lembrar.label }}
+      </div>
+
+      {{ form.submit(class='btn-submit') }}
+    </form>
+
+    <p class="form-footer">
+      Não tem conta? <a href="{{ url_for('main.cadastro') }}">Criar conta grátis</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

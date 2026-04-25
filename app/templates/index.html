@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Partidas — FutMetricX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <section class="page-header">
+    <h1>Próximas Partidas</h1>
+    <p class="subtitle">Relatórios pré-jogo gerados por IA, em dois modos.</p>
+  </section>
+
+  <div class="partidas-placeholder">
+    <div class="placeholder-icon">⚽</div>
+    <p>Dados de partidas chegam na <strong>Fase 1</strong>.</p>
+    <p class="text-muted">Fundação rodando — login, cadastro e admin funcionais.</p>
+  </div>
+</div>
+{% endblock %}

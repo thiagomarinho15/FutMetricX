@@ -1,0 +1,105 @@
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--navbar-h);
+  background: var(--verde-escuro);
+  z-index: 800;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.navbar-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand-fmx {
+  color: var(--dourado);
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 1px;
+}
+.brand-full { color: #fff; font-size: 0.875rem; font-weight: 500; opacity: 0.85; }
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.navbar-links a {
+  color: rgba(255,255,255,0.85);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+.navbar-links a:hover { color: #fff; }
+
+.btn-nav-cta {
+  background: var(--verde-claro) !important;
+  color: #fff !important;
+  padding: 0.4rem 1rem !important;
+  border-radius: 20px;
+  font-weight: 600 !important;
+  transition: background 0.15s !important;
+}
+.btn-nav-cta:hover { background: var(--dourado) !important; }
+
+/* User dropdown */
+.user-dropdown { position: relative; }
+
+.dropdown-toggle {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,0.85);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem; font-weight: 500;
+  padding: 0.25rem 0;
+  transition: color 0.15s;
+}
+.dropdown-toggle:hover { color: #fff; }
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  min-width: 160px;
+  padding: 0.5rem 0;
+  z-index: 900;
+}
+
+.dropdown-menu.open { display: block; animation: fadeSlideIn 0.15s ease; }
+
+.dropdown-menu a {
+  display: block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: var(--texto-escuro);
+  transition: background 0.1s;
+}
+.dropdown-menu a:hover { background: var(--fundo); }
+
+/* Tier badge no dropdown */
+.tier-badge {
+  display: block;
+  margin: 0.25rem 1rem 0.5rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+  width: fit-content;
+}
+.tier-standard { background: #e5e7eb; color: #374151; }
+.tier-pro       { background: #fef3c7; color: #92400e; }
+.tier-max       { background: var(--verde-escuro); color: var(--dourado); }

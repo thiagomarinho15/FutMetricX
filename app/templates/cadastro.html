@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Criar conta — FutMetricX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-card">
+    <div class="form-logo">
+      <span class="brand-fmx-lg">FMX</span>
+      <p>Crie sua conta gratuita.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('main.cadastro') }}" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="field-group">
+        {{ form.nome.label }}
+        {{ form.nome(placeholder='Seu nome completo') }}
+        {% if form.nome.errors %}
+          <span class="field-error">{{ form.nome.errors[0] }}</span>
+        {% endif %}
+      </div>
+
+      <div class="field-group">
+        {{ form.email.label }}
+        {{ form.email(placeholder='seu@email.com', autocomplete='email') }}
+        {% if form.email.errors %}
+          <span class="field-error">{{ form.email.errors[0] }}</span>
+        {% endif %}
+      </div>
+
+      <div class="field-group">
+        {{ form.senha.label }}
+        {{ form.senha(placeholder='Mínimo 8 caracteres') }}
+        {% if form.senha.errors %}
+          <span class="field-error">{{ form.senha.errors[0] }}</span>
+        {% endif %}
+      </div>
+
+      <div class="field-group">
+        {{ form.confirmar_senha.label }}
+        {{ form.confirmar_senha(placeholder='Repita a senha') }}
+        {% if form.confirmar_senha.errors %}
+          <span class="field-error">{{ form.confirmar_senha.errors[0] }}</span>
+        {% endif %}
+      </div>
+
+      {{ form.submit(class='btn-submit') }}
+    </form>
+
+    <p class="form-footer">
+      Já tem conta? <a href="{{ url_for('main.login') }}">Entrar</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
