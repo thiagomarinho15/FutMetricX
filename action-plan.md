@@ -311,7 +311,7 @@ GET  /admin/                    → Painel admin (role=admin)
 - [x] `seed.py` — roles padrão + user admin
 - [x] Testar: `docker compose up` → login funcional ✅ (testado em 2026-04-25)
 
-### Fase 1 — Dados de Futebol
+### Fase 1 — Dados de Futebol ✅ CONCLUÍDA
 - [x] `app/models.py` — adicionar Partida, Jogador
 - [x] `app/services/data_fetcher.py` — StatsBomb Open Data (La Liga + Champions League + Premier League, temporada mais recente de cada)
 - [x] Migration: tabelas Partida e Jogador (geradas automaticamente no `docker compose up --build`)
@@ -322,6 +322,7 @@ GET  /admin/                    → Painel admin (role=admin)
 - [x] CSS: `cards.css` — card com placar, badge de status, filter bar, página de detalhe
 - [x] JS: `cards.js` — filtro client-side por competição
 - [x] Testar: `docker compose down -v && docker compose up --build` — 40 partidas importadas (Premier League 2003/04 + La Liga + CL), dashboard com cards e filtro por competição funcionais (2026-04-25)
+- [ ] **Escudos das equipes**: adicionar campo `escudo_url` em Partida (ou Jogador), popular com URLs de API de escudos (ex: API-Football ou arquivo estático), exibir nos cards do dashboard e no cabeçalho da `partida.html`
 
 ### Fase 2 — Motor LLM
 - [x] **Passo 0:** Chaves LLM adicionadas ao `.env` local (Groq ×3, Gemini ×3, Ollama local)
