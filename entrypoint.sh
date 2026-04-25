@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if [ ! -f "migrations/env.py" ]; then
+    flask db init
+    flask db migrate -m "initial"
+fi
+
 flask db upgrade
 python seed.py
 
