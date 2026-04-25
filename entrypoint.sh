@@ -2,6 +2,7 @@
 set -e
 
 if [ ! -f "migrations/env.py" ]; then
+    rm -rf migrations
     flask db init
     flask db migrate -m "initial"
 fi
