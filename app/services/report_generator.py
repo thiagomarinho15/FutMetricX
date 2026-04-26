@@ -23,6 +23,22 @@ def montar_contexto_jogador(jogador) -> dict:
     }
 
 
+def montar_contexto_fixture(fixture) -> dict:
+    home = fixture.home_team.name if fixture.home_team else '?'
+    away = fixture.away_team.name if fixture.away_team else '?'
+    comp = fixture.competition
+    return {
+        'time_casa':        home,
+        'time_visitante':   away,
+        'competicao':       comp.name if comp else '?',
+        'temporada':        comp.season if comp else '?',
+        'rodada':           None,
+        'data':             fixture.scheduled_at.strftime('%d/%m/%Y') if fixture.scheduled_at else None,
+        'placar_casa':      fixture.home_score,
+        'placar_visitante': fixture.away_score,
+    }
+
+
 def montar_contexto(partida) -> dict:
     stats = partida.stats()
     return {

@@ -1,72 +1,382 @@
 {% extends 'base.html' %}
-{% from '_team_logo.html' import logo as team_logo_widget %}
-{% block title %}Partidas — FutMetricX{% endblock %}
+{% block title %}Fixtures — FutMetricX{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
+<style>
+/* ── Date Strip ──────────────────────────────────────────────────────── */
+.date-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 0 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.date-strip::-webkit-scrollbar { display: none; }
+
+.date-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+  min-width: 64px;
+  text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+}
+.date-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.date-btn.active {
+  background: var(--accent-primary-glow);
+  border-color: rgba(0,255,135,.2);
+  color: var(--accent-primary);
+}
+.date-btn-day  { font-size: .6875rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.date-btn-num  { font-family: 'DM Mono', monospace; font-size: 1.125rem; font-weight: 600; line-height: 1; }
+.date-btn-live { display: inline-flex; align-items: center; gap: 3px; font-size: .625rem; font-weight: 700; color: var(--status-live); letter-spacing: .06em; text-transform: uppercase; }
+
+/* ── Competition Group ───────────────────────────────────────────────── */
+.comp-group { margin-bottom: 8px; }
+
+.comp-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border: 1px solid var(--border-subtle);
+  border-bottom: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s;
+}
+.comp-header:hover { background: var(--bg-subtle); }
+
+.comp-icon {
+  width: 20px; height: 20px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .75rem; flex-shrink: 0;
+}
+
+.comp-name { font-size: .875rem; font-weight: 600; color: var(--text-primary); }
+.comp-round { font-size: .75rem; color: var(--text-muted); margin-left: 4px; }
+.comp-count { margin-left: auto; font-size: .75rem; color: var(--text-muted); }
+.comp-chevron { margin-left: 8px; color: var(--text-muted); transition: transform .2s; }
+.comp-group.collapsed .comp-chevron { transform: rotate(-90deg); }
+.comp-group.collapsed .comp-fixtures { display: none; }
+
+/* ── Fixture Card ────────────────────────────────────────────────────── */
+.comp-fixtures {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  overflow: hidden;
+}
+
+.fixture-card {
+  display: grid;
+  grid-template-columns: 52px 1fr auto 1fr 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background .12s;
+  text-decoration: none;
+  color: inherit;
+}
+.fixture-card:last-child { border-bottom: none; }
+.fixture-card:hover { background: var(--bg-elevated); }
+
+.fc-time {
+  font-family: 'DM Mono', monospace;
+  font-size: .8125rem;
+  color: var(--text-secondary);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.fc-time.finished { color: var(--text-muted); }
+.fc-time.live     { color: var(--status-live); font-weight: 600; }
+.fc-status-label {
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.fc-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.fc-team.away { flex-direction: row-reverse; }
+
+.team-badge {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .6875rem; font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.team-badge img { width: 100%; height: 100%; object-fit: contain; }
+
+.fc-team-name {
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fc-team.away .fc-team-name { text-align: right; }
+
+.fc-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  min-width: 52px;
+  flex-shrink: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.fc-score.live { color: var(--accent-primary); }
+.fc-score .score-dash {
+  color: var(--text-muted);
+  font-size: .875rem;
+}
+
+.fc-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-amber-glow);
+  border: 1px solid rgba(255,184,48,.15);
+  color: var(--accent-amber);
+  font-size: .7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity .15s;
+  text-decoration: none;
+  cursor: pointer;
+}
+.fixture-card:hover .fc-action { opacity: 1; }
+.fc-action.has-report { opacity: 1; }
+
+/* ── Empty state ─────────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--text-muted);
+}
+.empty-state-icon { font-size: 3rem; margin-bottom: 12px; opacity: .4; }
+.empty-state h3 { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.empty-state p { font-size: .875rem; }
+
+/* ── Page header ─────────────────────────────────────────────────────── */
+.page-heading {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.page-heading small {
+  font-family: 'DM Sans', sans-serif;
+  font-size: .8125rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0;
+}
+
+/* ── Live count badge ────────────────────────────────────────────────── */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background: rgba(255,68,68,.12);
+  border: 1px solid rgba(255,68,68,.25);
+  border-radius: var(--radius-full);
+  font-size: .6875rem;
+  font-weight: 700;
+  color: var(--status-live);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 599px) {
+  .fixture-card { grid-template-columns: 44px 1fr auto 1fr 32px; gap: 6px; padding: 10px 10px; }
+  .fc-team-name { font-size: .8125rem; }
+  .fc-score     { font-size: .9375rem; min-width: 44px; }
+  .team-badge   { width: 24px; height: 24px; font-size: .625rem; }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <section class="page-header">
-    <h1>Partidas</h1>
-    <p class="subtitle">Relatórios gerados por IA — Modo Torcedor e Modo Profissional.</p>
-  </section>
+{% set live_count = namespace(n=0) %}
+{% for comp, group in fixture_groups.items() %}
+  {% for f in group.fixtures %}
+    {% if f.status == 'live' %}{% set live_count.n = live_count.n + 1 %}{% endif %}
+  {% endfor %}
+{% endfor %}
 
-  {% if competicoes %}
-  <div class="filter-bar">
-    <button class="filter-btn active" data-filter="all">Todas</button>
-    {% for comp in competicoes %}
-    <button class="filter-btn" data-filter="{{ comp }}">{{ comp }}</button>
-    {% endfor %}
-  </div>
+<div class="page-heading">
+  Fixtures
+  {% if live_count.n > 0 %}
+  <span class="live-badge">
+    <span class="live-dot"></span>
+    {{ live_count.n }} ao vivo
+  </span>
   {% endif %}
-
-  {% if partidas %}
-  <div class="cards-grid" id="cards-grid">
-    {% for p in partidas %}
-    {% set stats = p.stats() %}
-    <a href="{{ url_for('main.partida', partida_id=p.id) }}"
-       class="card" data-competition="{{ p.competicao }}">
-      <div class="card-competition">
-        {{ p.competicao }}{% if p.rodada %} · Rodada {{ p.rodada }}{% endif %}
-      </div>
-      <div class="card-teams">
-        <div class="team-with-logo">
-          {{ team_logo_widget(p.time_casa) }}
-          <span class="team-name">{{ p.time_casa }}</span>
-        </div>
-        {% if p.status == 'encerrada' and stats.get('placar_casa') is not none %}
-        <span class="card-score">{{ stats.placar_casa }} – {{ stats.placar_visitante }}</span>
-        {% else %}
-        <span class="card-vs">vs</span>
-        {% endif %}
-        <div class="team-with-logo team-visitante">
-          <span class="team-name">{{ p.time_visitante }}</span>
-          {{ team_logo_widget(p.time_visitante) }}
-        </div>
-      </div>
-      <div class="card-meta">
-        {% if p.data_partida %}
-        <span>{{ p.data_partida.strftime('%d %b %Y') }}</span>
-        {% endif %}
-        <span class="status-badge status-{{ p.status }}">
-          {{ 'Encerrada' if p.status == 'encerrada' else 'Agendada' }}
-        </span>
-      </div>
-    </a>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="partidas-placeholder">
-    <div class="placeholder-icon">⚽</div>
-    <p>Nenhuma partida encontrada no banco de dados.</p>
-    <p class="text-muted">Execute o seed para importar dados do StatsBomb.</p>
-  </div>
-  {% endif %}
+  <small>{{ selected_date.strftime('%d de %B, %Y') }}</small>
 </div>
+
+<!-- Date Strip -->
+<div class="date-strip">
+  {% for d in dates %}
+  {% set day_names = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'] %}
+  {% set is_today = (d == today) %}
+  {% set is_selected = (d == selected_date) %}
+  <a href="{{ url_for('main.index') }}?date={{ d.strftime('%Y-%m-%d') }}"
+     class="date-btn {% if is_selected %}active{% endif %}">
+    <span class="date-btn-day">{% if is_today %}Hoje{% else %}{{ day_names[d.weekday()] }}{% endif %}</span>
+    <span class="date-btn-num">{{ d.strftime('%d') }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Fixture groups -->
+{% if fixture_groups %}
+  {% for comp_name, group in fixture_groups.items() %}
+  <div class="comp-group" id="group-{{ loop.index }}">
+    <div class="comp-header" onclick="toggleGroup('group-{{ loop.index }}')">
+      <div class="comp-icon">
+        {% if 'Champions' in comp_name %}🏆
+        {% elif 'Premier' in comp_name %}🏴󠁧󠁢󠁥󠁮󠁧󠁿
+        {% elif 'Brasil' in comp_name or 'Série' in comp_name %}🇧🇷
+        {% elif 'Liga' in comp_name or 'Spain' in comp_name %}🇪🇸
+        {% elif 'Bundesliga' in comp_name %}🇩🇪
+        {% elif 'Serie A' in comp_name or 'Italy' in comp_name %}🇮🇹
+        {% elif 'Ligue' in comp_name %}🇫🇷
+        {% else %}⚽
+        {% endif %}
+      </div>
+      <span class="comp-name">{{ comp_name }}</span>
+      <span class="comp-count">{{ group.fixtures|length }}</span>
+      <svg class="comp-chevron" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </div>
+
+    <div class="comp-fixtures">
+      {% for f in group.fixtures %}
+      {% set home_name = f.home_team.name if f.home_team else '?' %}
+      {% set away_name = f.away_team.name if f.away_team else '?' %}
+      {% set home_init = home_name[:3]|upper %}
+      {% set away_init = away_name[:3]|upper %}
+      {% set has_rel = f.relatorios|length > 0 if f.relatorios is defined else false %}
+
+      <a href="{{ url_for('main.jogo', fixture_id=f.id) }}" class="fixture-card">
+
+        <!-- Time / status -->
+        <div class="fc-time {% if f.status == 'finished' %}finished{% elif f.status == 'live' %}live{% endif %}">
+          {% if f.status == 'live' %}
+            <span class="live-dot"></span>
+            <span class="fc-status-label">Ao vivo</span>
+          {% elif f.status == 'finished' %}
+            {% if f.scheduled_at %}
+            <span>{{ f.scheduled_at.strftime('%H:%M') }}</span>
+            {% endif %}
+            <span class="fc-status-label" style="color:var(--status-win)">FT</span>
+          {% elif f.status == 'postponed' %}
+            <span class="fc-status-label" style="color:var(--accent-amber)">ADIADO</span>
+          {% else %}
+            {% if f.scheduled_at %}
+            <span>{{ f.scheduled_at.strftime('%H:%M') }}</span>
+            {% else %}
+            <span class="fc-status-label">–</span>
+            {% endif %}
+          {% endif %}
+        </div>
+
+        <!-- Home team -->
+        <div class="fc-team">
+          <div class="team-badge">{{ home_init }}</div>
+          <span class="fc-team-name">{{ home_name }}</span>
+        </div>
+
+        <!-- Score / vs -->
+        <div class="fc-score {% if f.status == 'live' %}live{% endif %}">
+          {% if f.status in ('finished', 'live') and f.home_score is not none %}
+            {{ f.home_score }}
+            <span class="score-dash">–</span>
+            {{ f.away_score }}
+          {% else %}
+            <span class="score-dash">–</span>
+          {% endif %}
+        </div>
+
+        <!-- Away team -->
+        <div class="fc-team away">
+          <div class="team-badge">{{ away_init }}</div>
+          <span class="fc-team-name">{{ away_name }}</span>
+        </div>
+
+        <!-- Action -->
+        <div class="fc-action {% if has_rel %}has-report{% endif %}" title="Ver análise">
+          📊
+        </div>
+
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+{% else %}
+<div class="empty-state">
+  <div class="empty-state-icon">⚽</div>
+  <h3>Nenhum jogo neste dia</h3>
+  <p>Navegue para outra data usando o seletor acima.</p>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/cards.js') }}"></script>
+<script>
+function toggleGroup(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+</script>
 {% endblock %}

@@ -2,88 +2,326 @@
 {% block title %}Notícias — FutMetricX{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/news.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+<style>
+.news-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.news-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  transition: border-color .15s, background .15s;
+}
+.news-card:hover { border-color: var(--border-default); background: var(--bg-elevated); }
+
+.news-card-top {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.news-card-body { flex: 1; min-width: 0; }
+
+.news-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.news-fonte-badge {
+  font-size: .625rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+}
+.fonte-espn     { background:rgba(208,0,0,.12); color:#ff4040; border-color:rgba(208,0,0,.25); }
+.fonte-globo    { background:rgba(230,100,0,.12); color:#e66400; border-color:rgba(230,100,0,.25); }
+.fonte-athletic { background:rgba(144,144,168,.12); color:#9090a8; border-color:rgba(144,144,168,.25); }
+.fonte-caze     { background:rgba(108,142,255,.12); color:#6c8eff; border-color:rgba(108,142,255,.25); }
+.fonte-bbc      { background:rgba(180,0,0,.12); color:#cc3333; border-color:rgba(180,0,0,.25); }
+.fonte-default  { background:var(--bg-elevated); color:var(--text-muted); border-color:var(--border-default); }
+
+.news-time { font-size: .75rem; color: var(--text-muted); }
+
+.news-title {
+  font-size: .9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color .15s;
+}
+.news-title:hover { color: var(--accent-primary); }
+
+.news-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-impact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: var(--accent-amber-glow);
+  border: 1px solid rgba(255,184,48,.25);
+  border-radius: var(--radius-md);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--accent-amber);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-impact:hover { background: rgba(255,184,48,.2); }
+.btn-impact:disabled { opacity: .5; cursor: wait; }
+
+.btn-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: all .15s;
+}
+.btn-read:hover { border-color: var(--border-strong); color: var(--text-primary); }
+
+.badge-done {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .75rem; font-weight: 600;
+  color: var(--status-win);
+  background: rgba(0,204,106,.10);
+  border: 1px solid rgba(0,204,106,.2);
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+}
+
+/* Impact panel */
+.impact-panel {
+  margin-top: 12px;
+  padding: 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-amber);
+}
+.impact-loading {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .8125rem; color: var(--text-muted);
+}
+.impact-loading-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent-amber);
+  animation: loadPulse 1s ease-in-out infinite;
+}
+@keyframes loadPulse {
+  0%,100% { transform:scale(1); opacity:1; }
+  50% { transform:scale(.6); opacity:.4; }
+}
+.impact-text {
+  font-size: .875rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px 0 0;
+  flex-wrap: wrap;
+}
+.page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  font-size: .875rem;
+  color: var(--text-secondary);
+  transition: all .15s;
+}
+.page-link:hover { background: var(--bg-subtle); color: var(--text-primary); border-color: var(--border-strong); }
+.page-link.active { background: var(--accent-primary-glow); color: var(--accent-primary); border-color: rgba(0,255,135,.25); }
+.page-link.disabled { opacity: .4; pointer-events: none; }
+
+/* Empty state */
+.empty-state { text-align:center; padding:64px 24px; color:var(--text-muted); }
+.empty-state-icon { font-size:3rem; margin-bottom:12px; opacity:.4; }
+.empty-state h3 { font-size:1rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px; }
+.empty-state p { font-size:.875rem; }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <section class="page-header">
-    <h1>Notícias</h1>
-    <p class="subtitle">Feed agregado de futebol — analise o impacto de qualquer notícia com IA.</p>
-  </section>
+<div class="page-heading" style="margin-bottom:20px;">
+  Notícias
+  <small>Atualizado a cada 30 min</small>
+</div>
 
-  {% if noticias.items %}
-  <div class="news-list">
-    {% for n in noticias.items %}
-    <div class="news-item">
-      <div class="news-top">
-        <div class="news-body">
-          <div class="news-fonte-data">
-            {% if n.fonte %}<span class="news-fonte">{{ n.fonte }}</span>{% endif %}
-            {% if n.publicada_em %}
-            <span class="news-data">{{ n.publicada_em.strftime('%d/%m/%Y %H:%M') }}</span>
-            {% endif %}
-          </div>
-          <a href="{{ n.url }}" target="_blank" rel="noopener" class="news-titulo">
-            {{ n.titulo }}
-          </a>
-        </div>
-        <div class="news-actions">
-          {% if n.impacto_processado %}
-          <span class="badge-processado">✅ Analisado</span>
-          {% elif current_user.is_authenticated %}
-          <button class="btn-impacto" id="btn-impacto-{{ n.id }}"
-                  onclick="analisarImpacto({{ n.id }})">
-            🔍 Analisar impacto
-          </button>
+{% if noticias.items %}
+<div class="news-grid">
+  {% for n in noticias.items %}
+  {% set fonte_lower = (n.fonte or '')|lower %}
+  {% if 'espn' in fonte_lower %}{% set fonte_cls = 'fonte-espn' %}
+  {% elif 'globo' in fonte_lower or 'ge.' in fonte_lower %}{% set fonte_cls = 'fonte-globo' %}
+  {% elif 'athletic' in fonte_lower %}{% set fonte_cls = 'fonte-athletic' %}
+  {% elif 'caze' in fonte_lower %}{% set fonte_cls = 'fonte-caze' %}
+  {% elif 'bbc' in fonte_lower %}{% set fonte_cls = 'fonte-bbc' %}
+  {% else %}{% set fonte_cls = 'fonte-default' %}{% endif %}
+
+  <div class="news-card" id="card-{{ n.id }}">
+    <div class="news-card-top">
+      <div class="news-card-body">
+        <div class="news-meta">
+          {% if n.fonte %}
+          <span class="news-fonte-badge {{ fonte_cls }}">{{ n.fonte }}</span>
+          {% endif %}
+          {% if n.publicada_em %}
+          <span class="news-time">{{ n.publicada_em.strftime('%d/%m %H:%M') }}</span>
           {% endif %}
         </div>
-      </div>
-
-      <div id="impacto-area-{{ n.id }}" class="impacto-area"
-           style="{{ '' if n.impacto_processado else 'display:none' }}">
-        <div id="loading-impacto-{{ n.id }}" class="loading-bar-wrap" style="display:none">
-          <div class="loading-bar"></div>
-        </div>
-        <div id="output-impacto-{{ n.id }}" class="impacto-output">
-          {{ n.resumo_impacto or '' }}
-        </div>
+        <a href="{{ n.url }}" target="_blank" rel="noopener" class="news-title">
+          {{ n.titulo }}
+        </a>
       </div>
     </div>
-    {% endfor %}
-  </div>
 
-  {# Pagination #}
-  {% if noticias.pages > 1 %}
-  <div class="pagination">
-    {% if noticias.has_prev %}
-    <a href="{{ url_for('main.noticias', page=noticias.prev_num) }}" class="page-link">← Anterior</a>
-    {% endif %}
-    {% for pg in noticias.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-      {% if pg %}
-      <a href="{{ url_for('main.noticias', page=pg) }}"
-         class="page-link {{ 'active' if pg == noticias.page }}">{{ pg }}</a>
-      {% else %}
-      <span class="page-link disabled">…</span>
+    <div class="news-actions">
+      {% if n.impacto_processado and n.resumo_impacto %}
+      <span class="badge-done">✓ Analisado</span>
+      <button class="btn-impact" onclick="toggleImpact({{ n.id }}, this)" style="background:transparent; color:var(--text-muted); border-color:var(--border-default);">
+        Ver análise
+      </button>
+      {% elif current_user.is_authenticated %}
+      <button class="btn-impact" id="btn-impact-{{ n.id }}"
+              onclick="analisarImpacto({{ n.id }}, this)">
+        🔍 Analisar impacto
+      </button>
       {% endif %}
-    {% endfor %}
-    {% if noticias.has_next %}
-    <a href="{{ url_for('main.noticias', page=noticias.next_num) }}" class="page-link">Próxima →</a>
-    {% endif %}
-  </div>
-  {% endif %}
+      <a href="{{ n.url }}" target="_blank" rel="noopener" class="btn-read">
+        Ler
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+        </svg>
+      </a>
+    </div>
 
-  {% else %}
-  <div class="partidas-placeholder">
-    <div class="placeholder-icon">📰</div>
-    <p>Nenhuma notícia ainda.</p>
-    <p class="text-muted">O feed RSS é atualizado automaticamente a cada 30 minutos.</p>
+    <div class="impact-panel" id="impact-panel-{{ n.id }}"
+         style="{{ '' if (n.impacto_processado and n.resumo_impacto) else 'display:none' }}">
+      <div class="impact-loading" id="impact-loading-{{ n.id }}" style="display:none;">
+        <div class="impact-loading-dot"></div> Analisando impacto...
+      </div>
+      <div class="impact-text" id="impact-output-{{ n.id }}">{{ n.resumo_impacto or '' }}</div>
+    </div>
   </div>
+  {% endfor %}
+</div>
+
+{% if noticias.pages > 1 %}
+<div class="pagination">
+  {% if noticias.has_prev %}
+  <a href="{{ url_for('main.noticias', page=noticias.prev_num) }}" class="page-link">←</a>
+  {% endif %}
+  {% for pg in noticias.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+    {% if pg %}
+    <a href="{{ url_for('main.noticias', page=pg) }}"
+       class="page-link {% if pg == noticias.page %}active{% endif %}">{{ pg }}</a>
+    {% else %}
+    <span class="page-link disabled">…</span>
+    {% endif %}
+  {% endfor %}
+  {% if noticias.has_next %}
+  <a href="{{ url_for('main.noticias', page=noticias.next_num) }}" class="page-link">→</a>
   {% endif %}
 </div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+  <div class="empty-state-icon">📰</div>
+  <h3>Nenhuma notícia ainda</h3>
+  <p>O feed RSS é atualizado automaticamente a cada 30 minutos.</p>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/news.js') }}"></script>
+<script>
+function toggleImpact(id, btn) {
+  const panel = document.getElementById('impact-panel-' + id);
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    btn.textContent = 'Ocultar';
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = 'Ver análise';
+  }
+}
+
+function analisarImpacto(id, btn) {
+  const panel   = document.getElementById('impact-panel-' + id);
+  const loading = document.getElementById('impact-loading-' + id);
+  const output  = document.getElementById('impact-output-' + id);
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="impact-loading-dot" style="display:inline-block;"></span> Analisando...';
+  panel.style.display = 'block';
+  if (loading) loading.style.display = 'flex';
+  output.textContent = '';
+
+  const src = new EventSource('/noticias/' + id + '/impacto');
+
+  src.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data.chunk) output.textContent += data.chunk;
+    if (data.texto) output.textContent = data.texto;
+    if (data.done) {
+      src.close();
+      if (loading) loading.style.display = 'none';
+      btn.innerHTML = '✓ Analisado';
+      btn.style.cssText = 'background:transparent; color:var(--status-win); border-color:rgba(0,204,106,.3)';
+    }
+    if (data.error) {
+      src.close();
+      if (loading) loading.style.display = 'none';
+      output.textContent = 'Erro: ' + data.error;
+      btn.disabled = false;
+      btn.textContent = '🔍 Analisar impacto';
+    }
+  };
+
+  src.onerror = function() {
+    src.close();
+    if (loading) loading.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = '🔍 Analisar impacto';
+  };
+}
+</script>
 {% endblock %}

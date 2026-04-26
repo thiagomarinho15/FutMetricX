@@ -41,6 +41,12 @@ with app.app_context():
     popular_partidas_iniciais()
     print('Importando jogadores (lineups)...')
     importar_jogadores_iniciais()
+
+    print('Populando tabelas SSoT via football-data.org...')
+    from app.workers.fixtures_worker import run as run_fixtures
+    n_fixtures = run_fixtures()
+    print(f'  → {n_fixtures} fixtures upserted (requer FOOTBALL_DATA_API_KEY)')
+
     print('Buscando notícias RSS...')
     n = buscar_noticias()
     print(f'  → {n} notícias importadas')

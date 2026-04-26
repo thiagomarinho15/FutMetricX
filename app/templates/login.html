@@ -1,46 +1,45 @@
 {% extends 'base.html' %}
 {% block title %}Entrar — FutMetricX{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
-{% endblock %}
-
-{% block content %}
-<div class="form-page">
-  <div class="form-card">
-    <div class="form-logo">
-      <span class="brand-fmx-lg">FMX</span>
-      <p>Futebol com inteligência.</p>
+{% block full_page %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-wordmark" style="font-size:1.5rem;">Fut<span>Metric</span>X</div>
     </div>
+    <h1 class="auth-title">Bem-vindo de volta</h1>
+    <p class="auth-subtitle">Entre para acessar seus relatórios e análises.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="flash flash-{{ cat }}" style="margin-bottom:16px;">{{ msg }}</div>
+    {% endfor %}
+    {% endwith %}
 
     <form method="POST" action="{{ url_for('main.login') }}" novalidate>
       {{ form.hidden_tag() }}
 
-      <div class="field-group">
-        {{ form.email.label }}
-        {{ form.email(placeholder='seu@email.com', autocomplete='email') }}
-        {% if form.email.errors %}
-          <span class="field-error">{{ form.email.errors[0] }}</span>
-        {% endif %}
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        {{ form.email(class='form-input', placeholder='seu@email.com', autocomplete='email') }}
+        {% if form.email.errors %}<div class="form-error">{{ form.email.errors[0] }}</div>{% endif %}
       </div>
 
-      <div class="field-group">
-        {{ form.senha.label }}
-        {{ form.senha(placeholder='Sua senha', autocomplete='current-password') }}
-        {% if form.senha.errors %}
-          <span class="field-error">{{ form.senha.errors[0] }}</span>
-        {% endif %}
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        {{ form.senha(class='form-input', placeholder='Sua senha', autocomplete='current-password') }}
+        {% if form.senha.errors %}<div class="form-error">{{ form.senha.errors[0] }}</div>{% endif %}
       </div>
 
-      <div class="field-check">
-        {{ form.lembrar() }}
-        {{ form.lembrar.label }}
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+        {{ form.lembrar(style='accent-color:var(--accent-primary); width:15px; height:15px;') }}
+        <label style="font-size:.875rem; color:var(--text-secondary); cursor:pointer;">Lembrar de mim</label>
       </div>
 
-      {{ form.submit(class='btn-submit') }}
+      {{ form.submit(class='btn btn-primary', style='width:100%; justify-content:center;') }}
     </form>
 
-    <p class="form-footer">
+    <p class="auth-footer">
       Não tem conta? <a href="{{ url_for('main.cadastro') }}">Criar conta grátis</a>
     </p>
   </div>

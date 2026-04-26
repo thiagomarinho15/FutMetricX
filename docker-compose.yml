@@ -7,24 +7,32 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     restart: unless-stopped
 
   db:
-    image: mysql:8.0
+    image: postgres:16
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - futmetricx_mysql:/var/lib/mysql
+      - futmetricx_postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "mysql -h127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1' $$MYSQL_DATABASE 2>/dev/null"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 12
       start_period: 30s
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - futmetricx_redis:/data
+    restart: unless-stopped
+
 volumes:
-  futmetricx_mysql:
+  futmetricx_postgres:
+  futmetricx_redis:
