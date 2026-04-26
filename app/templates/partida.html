@@ -4,6 +4,8 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/report.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -12,46 +14,114 @@
 
   <a href="{{ url_for('main.index') }}" class="btn-back">← Partidas</a>
 
+  {# ── Match header ── #}
   <div class="partida-header">
     <div class="partida-comp">
       {{ partida.competicao }} · {{ partida.temporada }}{% if partida.rodada %} · Rodada {{ partida.rodada }}{% endif %}
     </div>
-
     <div class="partida-placar">
       <div class="partida-time-block">
         {{ team_logo_widget(partida.time_casa, 'lg') }}
         <span class="partida-time">{{ partida.time_casa }}</span>
       </div>
-
       {% if partida.status == 'encerrada' and stats.get('placar_casa') is not none %}
       <span class="placar-numero">{{ stats.placar_casa }} – {{ stats.placar_visitante }}</span>
       {% else %}
       <span class="placar-vs">vs</span>
       {% endif %}
-
       <div class="partida-time-block">
         {{ team_logo_widget(partida.time_visitante, 'lg') }}
         <span class="partida-time">{{ partida.time_visitante }}</span>
       </div>
     </div>
-
     {% if partida.data_partida %}
-    <div class="partida-data">
-      {{ partida.data_partida.strftime('%d de %B de %Y') }}
-    </div>
+    <div class="partida-data">{{ partida.data_partida.strftime('%d de %B de %Y') }}</div>
     {% endif %}
   </div>
 
+  {# ── Reports section ── #}
   <div class="relatorio-section">
     <div class="modo-toggle">
-      <button class="btn-modo active" data-modo="torcedor">Torcedor</button>
-      <button class="btn-modo" data-modo="profissional">Profissional</button>
+      <button class="btn-modo active" data-modo="torcedor">⚽ Torcedor</button>
+      <button class="btn-modo" data-modo="profissional">📊 Profissional</button>
+      <button class="btn-modo" data-modo="locutor">🎙️ Locutor</button>
     </div>
 
-    <div class="relatorio-placeholder">
-      <p>Geração de relatórios via IA disponível na <strong>Fase 2</strong>.</p>
-      <p class="text-muted">O motor LLM multi-provider (Groq / Gemini / Ollama) será conectado em seguida.</p>
+    {# ── Torcedor ── #}
+    <div id="content-torcedor" class="modo-content">
+      {% if relatorios.get('pre_torcedor') %}
+        <div class="report-output">{{ relatorios.pre_torcedor.conteudo }}</div>
+      {% else %}
+        {% if current_user.is_authenticated %}
+        <button id="btn-gerar-pre_torcedor"
+                class="btn-gerar btn-gerar-torcedor"
+                onclick="gerarRelatorio({{ partida.id }}, 'pre_torcedor')">
+          ⚡ Gerar Relatório Torcedor
+        </button>
+        {% else %}
+        <p class="tier-gate-msg">Faça <a href="{{ url_for('main.login') }}">login</a> para gerar relatórios.</p>
+        {% endif %}
+        <div id="loading-pre_torcedor" class="loading-bar-wrap" style="display:none">
+          <div class="loading-bar"></div>
+        </div>
+        <div id="output-pre_torcedor" class="report-output"></div>
+      {% endif %}
+    </div>
+
+    {# ── Profissional ── #}
+    <div id="content-profissional" class="modo-content" style="display:none">
+      {% if relatorios.get('pre_profissional') %}
+        <div class="report-output">{{ relatorios.pre_profissional.conteudo }}</div>
+      {% elif current_user.is_authenticated and current_user.tier == 'standard' %}
+        <p class="tier-gate-msg">🔒 Modo Profissional disponível para contas <strong>Pro</strong> ou <strong>Max</strong>.</p>
+      {% else %}
+        {% if current_user.is_authenticated %}
+        <button id="btn-gerar-pre_profissional"
+                class="btn-gerar btn-gerar-profissional"
+                onclick="gerarRelatorio({{ partida.id }}, 'pre_profissional')">
+          📊 Gerar Análise Profissional
+        </button>
+        {% else %}
+        <p class="tier-gate-msg">Faça <a href="{{ url_for('main.login') }}">login</a> para gerar relatórios.</p>
+        {% endif %}
+        <div id="loading-pre_profissional" class="loading-bar-wrap" style="display:none">
+          <div class="loading-bar"></div>
+        </div>
+        <div id="output-pre_profissional" class="report-output"></div>
+      {% endif %}
+    </div>
+
+    {# ── Locutor ── #}
+    <div id="content-locutor" class="modo-content" style="display:none">
+      {% if relatorios.get('locutor') %}
+        <div class="report-output locutor-output">
+          {% for frase in relatorios.locutor.conteudo.split('\n') %}
+            {% if frase.strip() %}<span class="frase">{{ frase.strip() }}</span>{% endif %}
+          {% endfor %}
+        </div>
+      {% elif current_user.is_authenticated and current_user.tier not in ('pro', 'max') %}
+        <p class="tier-gate-msg">🎙️ Modo Locutor disponível para contas <strong>Max</strong>.</p>
+      {% else %}
+        {% if current_user.is_authenticated %}
+        <button id="btn-gerar-locutor"
+                class="btn-gerar btn-gerar-profissional"
+                onclick="gerarRelatorio({{ partida.id }}, 'locutor')">
+          🎙️ Gerar Frases Locutor
+        </button>
+        {% else %}
+        <p class="tier-gate-msg">Faça <a href="{{ url_for('main.login') }}">login</a> para gerar relatórios.</p>
+        {% endif %}
+        <div id="loading-locutor" class="loading-bar-wrap" style="display:none">
+          <div class="loading-bar"></div>
+        </div>
+        <div id="output-locutor" class="report-output locutor-output"></div>
+      {% endif %}
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>const PARTIDA_ID = {{ partida.id }};</script>
+<script src="{{ url_for('static', filename='js/report.js') }}"></script>
 {% endblock %}

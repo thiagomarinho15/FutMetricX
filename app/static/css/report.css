@@ -1,0 +1,80 @@
+/* ── Generate button ─────────────────────────── */
+.btn-gerar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  margin-bottom: 1.25rem;
+}
+
+.btn-gerar-torcedor {
+  background: var(--verde-escuro);
+  color: #fff;
+}
+.btn-gerar-torcedor:hover:not(:disabled) { background: var(--verde-medio); }
+
+.btn-gerar-profissional {
+  background: var(--azul-pro);
+  color: #fff;
+}
+.btn-gerar-profissional:hover:not(:disabled) { background: #1e4a70; }
+
+.btn-gerar:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Report output ───────────────────────────── */
+.report-output {
+  font-size: 0.975rem;
+  line-height: 1.8;
+  color: var(--texto-escuro);
+  padding: 0.5rem 0 1rem;
+  min-height: 60px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.report-output:empty::after {
+  content: '';
+}
+
+/* ── Tier gate message ───────────────────────── */
+.tier-gate-msg {
+  padding: 1rem 1.25rem;
+  background: #fef3c7;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.875rem;
+  border-left: 4px solid #f59e0b;
+  margin-bottom: 1rem;
+}
+
+/* ── Error message ───────────────────────────── */
+.report-error {
+  color: #991b1b;
+  font-size: 0.875rem;
+  padding: 0.75rem;
+  background: #fee2e2;
+  border-radius: 6px;
+  border-left: 4px solid #ef4444;
+}
+
+/* ── Locutor: pill list ──────────────────────── */
+.locutor-output .frase {
+  display: block;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.5rem;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  font-weight: 500;
+  line-height: 1.4;
+}

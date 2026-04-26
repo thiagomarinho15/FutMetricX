@@ -3,7 +3,7 @@ from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 
-from .models import db, User, Role, Partida, Jogador
+from .models import db, User, Role, Partida, Jogador, Relatorio
 
 
 class AdminAccessMixin:
@@ -46,6 +46,13 @@ class JogadorAdmin(AdminAccessMixin, ModelView):
     column_filters = ('ativo', 'posicao', 'temporada')
 
 
+class RelatorioAdmin(AdminAccessMixin, ModelView):
+    column_list = ('id', 'tipo', 'partida_id', 'user_tier_minimo', 'gerado_em')
+    column_filters = ('tipo', 'user_tier_minimo')
+    can_create = False
+    can_edit = False
+
+
 def init_admin(app):
     admin = Admin(
         app,
@@ -57,4 +64,5 @@ def init_admin(app):
     admin.add_view(RoleAdmin(Role, db.session, name='Roles'))
     admin.add_view(PartidaAdmin(Partida, db.session, name='Partidas'))
     admin.add_view(JogadorAdmin(Jogador, db.session, name='Jogadores'))
+    admin.add_view(RelatorioAdmin(Relatorio, db.session, name='Relatórios'))
     return admin

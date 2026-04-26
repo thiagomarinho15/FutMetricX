@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from .config import Config
 from .models import db, User
 from .adm import init_admin
+from markupsafe import Markup, escape
 from .services.team_logos import team_logo, team_initial, team_color
 
 login_manager = LoginManager()
@@ -24,11 +25,15 @@ def create_app():
 
     init_admin(app)
 
+    def nl2br(text: str) -> Markup:
+        return Markup('<br>'.join(escape(p) for p in str(text).split('\n')))
+
     app.jinja_env.globals.update(
         team_logo=team_logo,
         team_initial=team_initial,
         team_color=team_color,
     )
+    app.jinja_env.filters['nl2br'] = nl2br
 
     from .views import bp
     app.register_blueprint(bp)

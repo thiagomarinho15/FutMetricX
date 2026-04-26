@@ -1,0 +1,21 @@
+.loading-bar-wrap {
+  height: 4px;
+  background: var(--borda);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.loading-bar {
+  height: 100%;
+  width: 55%;
+  background: linear-gradient(90deg, var(--verde-escuro), var(--verde-claro), var(--verde-escuro));
+  background-size: 200% 100%;
+  border-radius: 2px;
+  animation: loading-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes loading-sweep {
+  0%   { transform: translateX(-160%); }
+  100% { transform: translateX(280%); }
+}

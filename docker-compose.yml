@@ -8,8 +8,6 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
-    volumes:
-      - .:/app
 
   db:
     image: mysql:8.0
@@ -21,10 +19,11 @@ services:
     volumes:
       - futmetricx_mysql:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASSWORD}"]
-      interval: 10s
+      test: ["CMD-SHELL", "mysql -h127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1' $$MYSQL_DATABASE 2>/dev/null"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 12
+      start_period: 30s
     restart: unless-stopped
 
 volumes:

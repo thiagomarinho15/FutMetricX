@@ -70,3 +70,19 @@ class Jogador(db.Model):
 
     def __repr__(self):
         return f'<Jogador {self.nome}>'
+
+
+class Relatorio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tipo = db.Column(db.String(30), nullable=False)
+    # pre_torcedor | pre_profissional | pos | jogador | locutor
+    partida_id = db.Column(db.Integer, db.ForeignKey('partida.id'), nullable=True)
+    jogador_id = db.Column(db.Integer, db.ForeignKey('jogador.id'), nullable=True)
+    conteudo = db.Column(db.Text, nullable=False)
+    gerado_em = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    user_tier_minimo = db.Column(db.String(20), default='standard')
+
+    partida = db.relationship('Partida', backref='relatorios')
+
+    def __repr__(self):
+        return f'<Relatorio {self.tipo} partida={self.partida_id}>'

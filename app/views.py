@@ -1,15 +1,20 @@
 from collections import defaultdict
 from time import time
 
+import json
+import logging
+
 from flask import (
     Blueprint, render_template, redirect, url_for,
-    flash, request, current_app
+    flash, request, current_app, Response, stream_with_context
 )
 from flask_login import login_user, logout_user, login_required, current_user
 
-from .models import db, User, Partida
+from .models import db, User, Partida, Relatorio
 from .forms import LoginForm, CadastroForm
 from .security import hash_senha, verificar_senha
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('main', __name__)
 
@@ -113,4 +118,51 @@ def index():
 @bp.route('/partida/<int:partida_id>')
 def partida(partida_id):
     p = Partida.query.get_or_404(partida_id)
-    return render_template('partida.html', partida=p)
+    rels = {r.tipo: r for r in Relatorio.query.filter_by(partida_id=partida_id).all()}
+    return render_template('partida.html', partida=p, relatorios=rels)
+
+
+@bp.route('/partida/<int:partida_id>/gerar')
+@login_required
+def gerar_relatorio(partida_id):
+    from .services.report_generator import gerar_relatorio_stream, montar_contexto
+
+    partida_obj = Partida.query.get_or_404(partida_id)
+    tipo = request.args.get('tipo', 'pre_torcedor')
+
+    # Tier gate: professional modes require pro+
+    _PRO_TIPOS = ('pre_profissional', 'locutor')
+    if tipo in _PRO_TIPOS and current_user.tier == 'standard':
+        def _denied():
+            yield f"data: {json.dumps({'error': 'Modo Profissional requer conta Pro ou superior.'})}\n\n"
+        return Response(_denied(), content_type='text/event-stream')
+
+    # Serve cached report if available
+    existing = Relatorio.query.filter_by(partida_id=partida_id, tipo=tipo).first()
+    if existing:
+        def _cached():
+            yield f"data: {json.dumps({'texto': existing.conteudo, 'done': True})}\n\n"
+        return Response(_cached(), content_type='text/event-stream')
+
+    ctx = montar_contexto(partida_obj)
+
+    def _stream():
+        chunks = []
+        try:
+            for chunk in gerar_relatorio_stream(tipo, ctx):
+                chunks.append(chunk)
+                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            conteudo = ''.join(chunks)
+            rel = Relatorio(tipo=tipo, partida_id=partida_id, conteudo=conteudo)
+            db.session.add(rel)
+            db.session.commit()
+            yield f"data: {json.dumps({'done': True})}\n\n"
+        except Exception as exc:
+            logger.error('Erro na geração: %s', exc)
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return Response(
+        stream_with_context(_stream()),
+        content_type='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
+    )

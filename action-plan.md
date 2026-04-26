@@ -324,16 +324,19 @@ GET  /admin/                    → Painel admin (role=admin)
 - [x] Testar: `docker compose down -v && docker compose up --build` — 40 partidas importadas (Premier League 2003/04 + La Liga + CL), dashboard com cards e filtro por competição funcionais (2026-04-25)
 - [x] **Escudos das equipes**: `app/services/team_logos.py` com mapeamento de 30 clubes → Wikipedia Commons SVG; avatar CSS circular com iniciais como fallback; exibido nos cards (32px) e cabeçalho da partida (56px); CSP atualizada para `img-src` Wikimedia (2026-04-25)
 
-### Fase 2 — Motor LLM
+### Fase 2 — Motor LLM ✅ CONCLUÍDA
 - [x] **Passo 0:** Chaves LLM adicionadas ao `.env` local (Groq ×3, Gemini ×3, Ollama local)
 - [x] Providers definidos: Groq como primário, Gemini como secundário, Ollama como fallback offline
-- [ ] `app/models.py` — adicionar Relatorio
-- [ ] `app/services/report_generator.py` — multi-provider + 5 prompts especializados
-- [ ] Streaming SSE no Flask (padrão ResumeX `summarizer.py`)
-- [ ] `report.js` — consome SSE, renderiza output progressivo
-- [ ] Loading bar durante geração
-- [ ] Armazenar relatório gerado no DB (não regenerar se já existe)
-- [ ] Testar: geração de relatório pré-jogo torcedor
+- [x] `app/models.py` — Relatorio (tipo, partida_id, jogador_id, conteudo, gerado_em, tier_minimo)
+- [x] `app/services/report_generator.py` — multi-provider + 5 prompts em PT-BR (torcedor, profissional, pós, jogador, locutor)
+- [x] Streaming SSE no Flask — `GET /partida/<id>/gerar?tipo=` com `stream_with_context`
+- [x] `report.js` — EventSource, append progressivo de chunks, toggle Torcedor/Profissional/Locutor
+- [x] Loading bar animada (`loading.css`) durante geração
+- [x] Cache: relatório já gerado retorna instantaneamente (1 linha SSE com `texto`)
+- [x] Tier gate: Profissional bloqueado para Standard; Locutor para não-Max
+- [x] `RelatorioAdmin` no painel Flask-Admin
+- [x] Correção crítica: removido `volumes: - .:/app` do docker-compose.yml (bind mount sobrescrevia migrations); healthcheck atualizado para verificar o DB real
+- [x] Testar: geração real com Groq — torcedor 1213 chars, profissional 1710 chars salvos no DB (2026-04-25)
 
 ### Fase 3 — Relatórios Core (MVP)
 - [ ] `app/models.py` — Relatorio completo (ambos os tons)
@@ -446,4 +449,4 @@ WTForms==3.1.2
 
 ---
 
-*Última atualização: 2026-04-25 — Fase 0 ✅ + Fase 1 ✅ (incluindo escudos) concluídas e testadas. App em http://localhost:8000 com 40 partidas reais, escudos dos times com fallback CSS. Próximo: Fase 2 (Motor LLM — Groq/Gemini/Ollama + streaming SSE).*
+*Última atualização: 2026-04-25 — Fase 0 ✅ + Fase 1 ✅ + Fase 2 ✅ concluídas e testadas. App em http://localhost:8000 com 416 partidas reais, relatórios LLM gerados via Groq com streaming SSE. Próximo: Fase 3 (Relatórios Core — página de partida completa, toggle dual-tone, perfil de jogador).*
