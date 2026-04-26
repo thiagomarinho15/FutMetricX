@@ -9,6 +9,49 @@ document.querySelectorAll('.btn-modo').forEach(btn => {
   });
 });
 
+/* SSE streaming — player profile */
+function gerarPerfil(jogadorId) {
+  const outputEl = document.getElementById('output-perfil_jogador');
+  const btnEl    = document.getElementById('btn-gerar-perfil_jogador');
+  const loadWrap = document.getElementById('loading-perfil_jogador');
+
+  if (!outputEl) return;
+  if (btnEl) btnEl.disabled = true;
+  if (loadWrap) loadWrap.style.display = 'block';
+  outputEl.textContent = '';
+  outputEl.classList.remove('report-error');
+
+  const src = new EventSource('/jogador/' + jogadorId + '/gerar');
+
+  src.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    if (data.chunk) outputEl.textContent += data.chunk;
+    if (data.texto) outputEl.textContent = data.texto;
+    if (data.done) {
+      src.close();
+      if (loadWrap) loadWrap.style.display = 'none';
+      if (btnEl) btnEl.style.display = 'none';
+    }
+    if (data.error) {
+      src.close();
+      if (loadWrap) loadWrap.style.display = 'none';
+      outputEl.textContent = 'Erro: ' + data.error;
+      outputEl.classList.add('report-error');
+      if (btnEl) btnEl.disabled = false;
+    }
+  };
+
+  src.onerror = function () {
+    src.close();
+    if (loadWrap) loadWrap.style.display = 'none';
+    if (outputEl.textContent === '') {
+      outputEl.textContent = 'Falha na conexão. Tente novamente.';
+      outputEl.classList.add('report-error');
+    }
+    if (btnEl) btnEl.disabled = false;
+  };
+}
+
 /* SSE streaming */
 function gerarRelatorio(partidaId, tipo) {
   const outputEl  = document.getElementById('output-' + tipo);

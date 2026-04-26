@@ -118,6 +118,37 @@
       {% endif %}
     </div>
   </div>
+
+  {# ── Players section ── #}
+  {% if jogadores_casa or jogadores_visitante %}
+  <div class="players-section">
+    <h2 class="section-title">Elenco</h2>
+    <div class="players-grid">
+      <div class="team-column">
+        <h3 class="team-column-title">{{ partida.time_casa }}</h3>
+        {% for j in jogadores_casa %}
+        <a href="{{ url_for('main.jogador', jogador_id=j.id) }}" class="player-chip">
+          <span class="player-chip-name">{{ j.nome }}</span>
+          {% if j.posicao %}<span class="player-chip-pos">{{ j.posicao[:3] }}</span>{% endif %}
+        </a>
+        {% else %}
+        <p class="text-muted" style="font-size:.8rem">Sem dados de elenco.</p>
+        {% endfor %}
+      </div>
+      <div class="team-column">
+        <h3 class="team-column-title">{{ partida.time_visitante }}</h3>
+        {% for j in jogadores_visitante %}
+        <a href="{{ url_for('main.jogador', jogador_id=j.id) }}" class="player-chip">
+          <span class="player-chip-name">{{ j.nome }}</span>
+          {% if j.posicao %}<span class="player-chip-pos">{{ j.posicao[:3] }}</span>{% endif %}
+        </a>
+        {% else %}
+        <p class="text-muted" style="font-size:.8rem">Sem dados de elenco.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
 

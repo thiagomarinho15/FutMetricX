@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from statsbombpy import sb
 
-from ..models import db, Partida
+from ..models import db, Partida, Jogador
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,60 @@ def _importar_temporada(comp_id, season_id, comp_name, season_name):
         )
         db.session.add(p)
         added += 1
+    db.session.commit()
+    return added
+
+
+def importar_jogadores_iniciais():
+    """Import players from the 10 most recent matches via StatsBomb lineups. Idempotent."""
+    if Jogador.query.count() > 0:
+        return
+    logger.info('StatsBomb: importando lineups...')
+    amostra = (
+        Partida.query
+        .filter(Partida.statsbomb_id.isnot(None))
+        .order_by(Partida.data_partida.desc())
+        .limit(10)
+        .all()
+    )
+    total = 0
+    for p in amostra:
+        try:
+            n = _importar_lineup(p.statsbomb_id, p.temporada)
+            total += n
+        except Exception as exc:
+            logger.warning('Lineup falhou partida %d: %s', p.statsbomb_id, exc)
+    logger.info('%d jogadores importados', total)
+    print(f'  → {total} jogadores de {len(amostra)} partidas')
+
+
+def _importar_lineup(match_id: int, temporada: str) -> int:
+    lineups = sb.lineups(match_id=match_id)
+    added = 0
+    for team_name, df in lineups.items():
+        for _, row in df.iterrows():
+            sid = int(row['player_id'])
+            if Jogador.query.filter_by(statsbomb_id=sid).first():
+                continue
+
+            positions = row.get('positions', [])
+            posicao = None
+            if isinstance(positions, list) and positions:
+                p0 = positions[0]
+                posicao = p0.get('position') if isinstance(p0, dict) else str(p0)
+
+            country = row.get('country', {})
+            nacionalidade = country.get('name') if isinstance(country, dict) else None
+
+            db.session.add(Jogador(
+                statsbomb_id=sid,
+                nome=str(row['player_name']),
+                time_atual=team_name,
+                posicao=posicao,
+                nacionalidade=nacionalidade,
+                temporada=temporada,
+            ))
+            added += 1
     db.session.commit()
     return added
 

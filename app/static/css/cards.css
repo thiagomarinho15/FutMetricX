@@ -294,3 +294,115 @@
 .relatorio-placeholder p {
   margin-bottom: 0.5rem;
 }
+
+/* ── Section title ───────────────────────────── */
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  margin-bottom: 1rem;
+}
+
+/* ── Players section (partida detail) ───────── */
+.players-section {
+  background: var(--card-bg);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px var(--sombra);
+  margin-top: 1.25rem;
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.team-column-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--verde-claro);
+}
+
+.player-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.28rem 0.6rem;
+  margin-bottom: 0.3rem;
+  border-radius: 5px;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  text-decoration: none;
+  color: var(--texto-escuro);
+  font-size: 0.8rem;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.player-chip:hover {
+  background: #e0f2e9;
+  border-color: var(--verde-claro);
+  color: var(--verde-escuro);
+}
+
+.player-chip-name {
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-chip-pos {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--texto-medio);
+  margin-left: 0.5rem;
+  background: var(--borda);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Player profile header ───────────────────── */
+.jogador-header {
+  background: var(--card-bg);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 2px 8px var(--sombra);
+  margin-bottom: 1.25rem;
+}
+
+.jogador-nome {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  margin-bottom: 0.5rem;
+}
+
+.jogador-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.meta-item {
+  font-size: 0.8rem;
+  color: var(--texto-medio);
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+}

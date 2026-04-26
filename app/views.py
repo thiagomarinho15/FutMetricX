@@ -10,7 +10,7 @@ from flask import (
 )
 from flask_login import login_user, logout_user, login_required, current_user
 
-from .models import db, User, Partida, Relatorio
+from .models import db, User, Partida, Jogador, Relatorio
 from .forms import LoginForm, CadastroForm
 from .security import hash_senha, verificar_senha
 
@@ -119,7 +119,54 @@ def index():
 def partida(partida_id):
     p = Partida.query.get_or_404(partida_id)
     rels = {r.tipo: r for r in Relatorio.query.filter_by(partida_id=partida_id).all()}
-    return render_template('partida.html', partida=p, relatorios=rels)
+    jogadores_casa = Jogador.query.filter_by(time_atual=p.time_casa).order_by(Jogador.nome).limit(25).all()
+    jogadores_vis  = Jogador.query.filter_by(time_atual=p.time_visitante).order_by(Jogador.nome).limit(25).all()
+    return render_template('partida.html', partida=p, relatorios=rels,
+                           jogadores_casa=jogadores_casa, jogadores_visitante=jogadores_vis)
+
+
+@bp.route('/jogador/<int:jogador_id>')
+def jogador(jogador_id):
+    j = Jogador.query.get_or_404(jogador_id)
+    rel = Relatorio.query.filter_by(jogador_id=jogador_id, tipo='perfil_jogador').first()
+    return render_template('jogador.html', jogador=j, relatorio=rel)
+
+
+@bp.route('/jogador/<int:jogador_id>/gerar')
+@login_required
+def gerar_perfil_jogador(jogador_id):
+    from .services.report_generator import gerar_relatorio_stream, montar_contexto_jogador
+
+    j = Jogador.query.get_or_404(jogador_id)
+
+    existing = Relatorio.query.filter_by(jogador_id=jogador_id, tipo='perfil_jogador').first()
+    if existing:
+        def _cached():
+            yield f"data: {json.dumps({'texto': existing.conteudo, 'done': True})}\n\n"
+        return Response(_cached(), content_type='text/event-stream')
+
+    ctx = montar_contexto_jogador(j)
+
+    def _stream():
+        chunks = []
+        try:
+            for chunk in gerar_relatorio_stream('perfil_jogador', ctx):
+                chunks.append(chunk)
+                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            conteudo = ''.join(chunks)
+            rel = Relatorio(tipo='perfil_jogador', jogador_id=jogador_id, conteudo=conteudo)
+            db.session.add(rel)
+            db.session.commit()
+            yield f"data: {json.dumps({'done': True})}\n\n"
+        except Exception as exc:
+            logger.error('Erro no perfil: %s', exc)
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return Response(
+        stream_with_context(_stream()),
+        content_type='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
+    )
 
 
 @bp.route('/partida/<int:partida_id>/gerar')

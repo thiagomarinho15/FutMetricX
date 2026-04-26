@@ -338,16 +338,18 @@ GET  /admin/                    → Painel admin (role=admin)
 - [x] Correção crítica: removido `volumes: - .:/app` do docker-compose.yml (bind mount sobrescrevia migrations); healthcheck atualizado para verificar o DB real
 - [x] Testar: geração real com Groq — torcedor 1213 chars, profissional 1710 chars salvos no DB (2026-04-25)
 
-### Fase 3 — Relatórios Core (MVP)
-- [ ] `app/models.py` — Relatorio completo (ambos os tons)
-- [ ] Rota `GET /partida/<id>` — página com toggle dual-tone
-- [ ] Toggle Torcedor / Profissional (JS + CSS animado)
-- [ ] Rota `POST /partida/<id>/gerar` — dispara geração dos dois tons
-- [ ] `partida.html` — layout completo com stats + relatório
-- [ ] Rota `GET /jogador/<id>` — perfil narrativo
-- [ ] `jogador.html` — card do jogador com streaming
-- [ ] CSS: `report.css` — layout do relatório, tipografia legível
-- [ ] Testar: fluxo completo torcedor → profissional
+### Fase 3 — Relatórios Core (MVP) ✅ CONCLUÍDA
+- [x] `app/models.py` — Relatorio (concluído na Fase 2)
+- [x] Rota `GET /partida/<id>` — toggle dual-tone + seção de elenco com links para jogadores
+- [x] Toggle Torcedor / Profissional / Locutor (JS + CSS animado)
+- [x] Rota `GET /partida/<id>/gerar?tipo=` — SSE streaming (concluído na Fase 2)
+- [x] `partida.html` — relatório + elenco dos dois times com chips clicáveis
+- [x] Rota `GET /jogador/<id>` — perfil narrativo do jogador
+- [x] Rota `GET /jogador/<id>/gerar` — perfil gerado via Groq (SSE + cache)
+- [x] `jogador.html` — header com logo, posição, clube, nacionalidade + geração LLM
+- [x] CSS: `report.css`, `cards.css` (player chips, jogador header) — layout do relatório
+- [x] `data_fetcher.py` — `importar_jogadores_iniciais()`: lineups das 10 partidas mais recentes
+- [x] Testar: 236 jogadores importados, perfil gerado (1611 chars), cache 1 linha SSE (2026-04-26)
 
 ### Fase 4 — Notícias e Contexto
 - [ ] `app/models.py` — Noticia, ContextoHistorico
@@ -449,4 +451,4 @@ WTForms==3.1.2
 
 ---
 
-*Última atualização: 2026-04-25 — Fase 0 ✅ + Fase 1 ✅ + Fase 2 ✅ concluídas e testadas. App em http://localhost:8000 com 416 partidas reais, relatórios LLM gerados via Groq com streaming SSE. Próximo: Fase 3 (Relatórios Core — página de partida completa, toggle dual-tone, perfil de jogador).*
+*Última atualização: 2026-04-26 — Fase 0 ✅ + Fase 1 ✅ + Fase 2 ✅ + Fase 3 ✅ concluídas e testadas. App com 416 partidas, 236 jogadores, relatórios LLM (torcedor/profissional/locutor/perfil de jogador) com streaming SSE e cache. Próximo: Fase 4 (Notícias e Contexto — RSS feeds, APScheduler, análise de impacto).*

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% from '_team_logo.html' import logo as team_logo_widget %}
+{% block title %}{{ jogador.nome }} — FutMetricX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/report.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <a href="javascript:history.back()" class="btn-back">← Voltar</a>
+
+  <div class="jogador-header">
+    {{ team_logo_widget(jogador.time_atual or '', 'lg') }}
+    <div class="jogador-info">
+      <h1 class="jogador-nome">{{ jogador.nome }}</h1>
+      <div class="jogador-meta">
+        {% if jogador.posicao %}
+        <span class="meta-item">{{ jogador.posicao }}</span>
+        {% endif %}
+        {% if jogador.time_atual %}
+        <span class="meta-item">{{ jogador.time_atual }}</span>
+        {% endif %}
+        {% if jogador.nacionalidade %}
+        <span class="meta-item">🌍 {{ jogador.nacionalidade }}</span>
+        {% endif %}
+        {% if jogador.temporada %}
+        <span class="meta-item">{{ jogador.temporada }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="relatorio-section">
+    <h2 class="section-title">Perfil Narrativo</h2>
+
+    {% if relatorio %}
+      <div class="report-output">{{ relatorio.conteudo }}</div>
+    {% else %}
+      {% if current_user.is_authenticated %}
+      <button id="btn-gerar-perfil_jogador"
+              class="btn-gerar btn-gerar-torcedor"
+              onclick="gerarPerfil({{ jogador.id }})">
+        ⚡ Gerar Perfil do Jogador
+      </button>
+      {% else %}
+      <p class="tier-gate-msg">
+        Faça <a href="{{ url_for('main.login') }}">login</a> para gerar perfis.
+      </p>
+      {% endif %}
+      <div id="loading-perfil_jogador" class="loading-bar-wrap" style="display:none">
+        <div class="loading-bar"></div>
+      </div>
+      <div id="output-perfil_jogador" class="report-output"></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/report.js') }}"></script>
+{% endblock %}

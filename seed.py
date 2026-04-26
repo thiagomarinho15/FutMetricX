@@ -6,7 +6,7 @@ load_dotenv()
 from app import create_app
 from app.models import db, User, Role
 from app.security import hash_senha
-from app.services.data_fetcher import popular_partidas_iniciais
+from app.services.data_fetcher import popular_partidas_iniciais, importar_jogadores_iniciais
 
 app = create_app()
 
@@ -38,4 +38,6 @@ with app.app_context():
 
     print('Importando partidas do StatsBomb Open Data...')
     popular_partidas_iniciais()
+    print('Importando jogadores (lineups)...')
+    importar_jogadores_iniciais()
     print('Seed concluído.')

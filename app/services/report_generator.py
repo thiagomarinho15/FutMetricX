@@ -13,6 +13,16 @@ logger = logging.getLogger(__name__)
 # Prompts
 # ---------------------------------------------------------------------------
 
+def montar_contexto_jogador(jogador) -> dict:
+    return {
+        'nome':         jogador.nome,
+        'time':         jogador.time_atual or 'Desconhecido',
+        'posicao':      jogador.posicao or 'Desconhecida',
+        'nacionalidade': jogador.nacionalidade or 'Desconhecida',
+        'temporada':    jogador.temporada or '',
+    }
+
+
 def montar_contexto(partida) -> dict:
     stats = partida.stats()
     return {
@@ -28,6 +38,21 @@ def montar_contexto(partida) -> dict:
 
 
 def _montar_prompt(tipo: str, ctx: dict) -> str:
+    # Standalone player profile — different context structure (no match fields)
+    if tipo == 'perfil_jogador':
+        return (
+            "Você é um jornalista esportivo especializado em perfis de jogadores.\n"
+            "Escreva um perfil narrativo envolvente sobre este jogador.\n\n"
+            f"Nome: {ctx.get('nome')}\n"
+            f"Clube: {ctx.get('time')}\n"
+            f"Posição: {ctx.get('posicao')}\n"
+            f"Nacionalidade: {ctx.get('nacionalidade')}\n"
+            f"Temporada: {ctx.get('temporada')}\n\n"
+            "Tom: narrativo e humano. Destaque o estilo de jogo, características marcantes, "
+            "trajetória na carreira e o que torna este jogador especial.\n"
+            "Responda em português do Brasil. Máximo 300 palavras."
+        )
+
     info = (
         f"Partida: {ctx['time_casa']} vs {ctx['time_visitante']}\n"
         f"Competição: {ctx['competicao']} | Temporada: {ctx['temporada']}"
