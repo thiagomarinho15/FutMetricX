@@ -366,13 +366,14 @@ GET  /admin/                    → Painel admin (role=admin)
 - [x] Admin: NoticiaAdmin + ContextoHistoricoAdmin (/admin/contextohistorico/)
 - [x] Testado: 45 notícias RSS, impacto (177 SSE), retrospecto (466 SSE), cache funcionando (2026-04-26)
 
-### Fase 5 — Engajamento
-- [ ] Relatório pós-jogo narrativo (trigger automático após `status='encerrada'`)
-- [ ] Modo Locutor: prompt + formato de output curto/verbalizável
-- [ ] Cards compartilháveis (PNG via `imgkit` ou canvas JS)
-- [ ] Toggle para Modo Locutor na página da partida
-- [ ] Scheduler: geração automática de relatórios pré-jogo (D-1)
-- [ ] Tier gates: Pro = relatório profissional, Max = locutor + PDF
+### Fase 5 — Engajamento ✅ CONCLUÍDA
+- [x] Relatório pós-jogo: tab "🏁 Pós-Jogo" em `partida.html` (visível apenas quando status='encerrada'), usa prompt `pos` existente
+- [x] Modo Locutor: concluído na Fase 2 ✅
+- [x] Cards compartilháveis: `share_card.js` — Canvas JS gera PNG 680×340px com gradient, avatares coloridos (iniciais), placar e download automático
+- [x] Toggle Locutor: concluído na Fase 2 ✅
+- [x] Scheduler D-1: job `cron hour=0 min=0` em `scheduler.py` — gera `pre_torcedor` para partidas agendadas nas próximas 24h
+- [x] Tier gates: concluídos na Fase 2 ✅
+- [x] Testado: pós-jogo SSE 484 linhas, MATCH_DATA com cor/iniciais corretos, btn-share na página (2026-04-26)
 
 ### Fase 6 — Polimento e Launch
 - [ ] Mobile: breakpoints e layout responsivo em todos os templates
@@ -454,4 +455,4 @@ WTForms==3.1.2
 
 ---
 
-*Última atualização: 2026-04-26 — Fases 0–4 ✅ concluídas. App com 416 partidas, 236 jogadores, 45 notícias RSS, relatórios LLM com SSE e cache, retrospecto histórico entre clubes. Próximo: Fase 5 (Engajamento — pós-jogo automático, cards compartilháveis, tier gates completos).*
+*Última atualização: 2026-04-26 — Fases 0–5 ✅ concluídas. App com 416 partidas, 236 jogadores, 45 notícias RSS, 6 tipos de relatório LLM com SSE/cache, cards compartilháveis via Canvas JS. Próximo: Fase 6 (Polimento e Launch — mobile responsivo, PWA, auditoria de segurança, README).*

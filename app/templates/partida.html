@@ -37,6 +37,9 @@
     {% if partida.data_partida %}
     <div class="partida-data">{{ partida.data_partida.strftime('%d de %B de %Y') }}</div>
     {% endif %}
+    <div style="margin-top:1rem">
+      <button class="btn-share" onclick="compartilharCard()">📤 Compartilhar Card</button>
+    </div>
   </div>
 
   {# ── Reports section ── #}
@@ -45,6 +48,9 @@
       <button class="btn-modo active" data-modo="torcedor">⚽ Torcedor</button>
       <button class="btn-modo" data-modo="profissional">📊 Profissional</button>
       <button class="btn-modo" data-modo="locutor">🎙️ Locutor</button>
+      {% if partida.status == 'encerrada' %}
+      <button class="btn-modo" data-modo="pos">🏁 Pós-Jogo</button>
+      {% endif %}
     </div>
 
     {# ── Torcedor ── #}
@@ -117,6 +123,28 @@
         <div id="output-locutor" class="report-output locutor-output"></div>
       {% endif %}
     </div>
+    {# ── Pós-Jogo ── #}
+    {% if partida.status == 'encerrada' %}
+    <div id="content-pos" class="modo-content" style="display:none">
+      {% if relatorios.get('pos') %}
+        <div class="report-output">{{ relatorios.pos.conteudo }}</div>
+      {% else %}
+        {% if current_user.is_authenticated %}
+        <button id="btn-gerar-pos"
+                class="btn-gerar btn-gerar-torcedor"
+                onclick="gerarRelatorio({{ partida.id }}, 'pos')">
+          🏁 Gerar Análise Pós-Jogo
+        </button>
+        {% else %}
+        <p class="tier-gate-msg">Faça <a href="{{ url_for('main.login') }}">login</a> para gerar relatórios.</p>
+        {% endif %}
+        <div id="loading-pos" class="loading-bar-wrap" style="display:none">
+          <div class="loading-bar"></div>
+        </div>
+        <div id="output-pos" class="report-output"></div>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 
   {# ── Retrospecto histórico ── #}
@@ -168,6 +196,25 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>const PARTIDA_ID = {{ partida.id }};</script>
+<script>
+const PARTIDA_ID = {{ partida.id }};
+{% set stats = partida.stats() %}
+window.MATCH_DATA = {
+  time_casa:       {{ partida.time_casa | tojson }},
+  time_visitante:  {{ partida.time_visitante | tojson }},
+  competicao:      {{ partida.competicao | tojson }},
+  temporada:       {{ partida.temporada | tojson }},
+  rodada:          {{ partida.rodada or 'null' }},
+  data_str:        {{ (partida.data_partida.strftime('%d/%m/%Y') if partida.data_partida else '') | tojson }},
+  placar_casa:     {{ stats.get('placar_casa') if stats.get('placar_casa') is not none else 'null' }},
+  placar_visitante: {{ stats.get('placar_visitante') if stats.get('placar_visitante') is not none else 'null' }},
+  status:          {{ partida.status | tojson }},
+  cor_casa:        {{ team_color(partida.time_casa) | tojson }},
+  ini_casa:        {{ team_initial(partida.time_casa) | tojson }},
+  cor_visitante:   {{ team_color(partida.time_visitante) | tojson }},
+  ini_visitante:   {{ team_initial(partida.time_visitante) | tojson }},
+};
+</script>
 <script src="{{ url_for('static', filename='js/report.js') }}"></script>
+<script src="{{ url_for('static', filename='js/share_card.js') }}"></script>
 {% endblock %}

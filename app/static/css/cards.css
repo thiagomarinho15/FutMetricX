@@ -169,6 +169,24 @@
   color: #92400e;
 }
 
+/* ── Share button ────────────────────────────── */
+.btn-share {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.8);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.85rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-share:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+
 /* ── Partida detail page ─────────────────────── */
 .btn-back {
   display: inline-block;
