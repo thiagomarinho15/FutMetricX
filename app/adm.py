@@ -3,7 +3,7 @@ from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 
-from .models import db, User, Role, Partida, Jogador, Relatorio
+from .models import db, User, Role, Partida, Jogador, Relatorio, Noticia, ContextoHistorico
 
 
 class AdminAccessMixin:
@@ -53,6 +53,19 @@ class RelatorioAdmin(AdminAccessMixin, ModelView):
     can_edit = False
 
 
+class NoticiaAdmin(AdminAccessMixin, ModelView):
+    column_list = ('id', 'titulo', 'fonte', 'publicada_em', 'impacto_processado')
+    column_searchable_list = ('titulo', 'fonte')
+    column_filters = ('fonte', 'impacto_processado')
+    column_default_sort = ('publicada_em', True)
+    can_create = False
+
+
+class ContextoHistoricoAdmin(AdminAccessMixin, ModelView):
+    column_list = ('id', 'time1', 'time2', 'atualizado_em')
+    column_searchable_list = ('time1', 'time2')
+
+
 def init_admin(app):
     admin = Admin(
         app,
@@ -65,4 +78,6 @@ def init_admin(app):
     admin.add_view(PartidaAdmin(Partida, db.session, name='Partidas'))
     admin.add_view(JogadorAdmin(Jogador, db.session, name='Jogadores'))
     admin.add_view(RelatorioAdmin(Relatorio, db.session, name='Relatórios'))
+    admin.add_view(NoticiaAdmin(Noticia, db.session, name='Notícias'))
+    admin.add_view(ContextoHistoricoAdmin(ContextoHistorico, db.session, name='Histórico'))
     return admin

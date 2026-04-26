@@ -119,6 +119,21 @@
     </div>
   </div>
 
+  {# ── Retrospecto histórico ── #}
+  {% if current_user.is_authenticated %}
+  <div class="relatorio-section" style="margin-top:1.25rem">
+    <h2 class="section-title">Retrospecto Histórico</h2>
+    <button id="btn-retrospecto" class="btn-gerar btn-gerar-torcedor"
+            onclick="gerarRetrospecto({{ partida.id }})">
+      📜 Gerar Retrospecto
+    </button>
+    <div id="loading-retrospecto" class="loading-bar-wrap" style="display:none">
+      <div class="loading-bar"></div>
+    </div>
+    <div id="output-retrospecto" class="report-output"></div>
+  </div>
+  {% endif %}
+
   {# ── Players section ── #}
   {% if jogadores_casa or jogadores_visitante %}
   <div class="players-section">

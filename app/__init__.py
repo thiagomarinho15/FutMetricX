@@ -7,6 +7,7 @@ from .models import db, User
 from .adm import init_admin
 from markupsafe import Markup, escape
 from .services.team_logos import team_logo, team_initial, team_color
+from .services.scheduler import init_scheduler
 
 login_manager = LoginManager()
 migrate = Migrate()
@@ -37,6 +38,8 @@ def create_app():
 
     from .views import bp
     app.register_blueprint(bp)
+
+    init_scheduler(app)
 
     @app.after_request
     def security_headers(response):

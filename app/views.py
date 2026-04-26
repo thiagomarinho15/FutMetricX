@@ -10,7 +10,7 @@ from flask import (
 )
 from flask_login import login_user, logout_user, login_required, current_user
 
-from .models import db, User, Partida, Jogador, Relatorio
+from .models import db, User, Partida, Jogador, Relatorio, Noticia, ContextoHistorico
 from .forms import LoginForm, CadastroForm
 from .security import hash_senha, verificar_senha
 
@@ -164,6 +164,121 @@ def gerar_perfil_jogador(jogador_id):
 
     return Response(
         stream_with_context(_stream()),
+        content_type='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Notícias
+# ---------------------------------------------------------------------------
+
+@bp.route('/noticias')
+def noticias():
+    page = request.args.get('page', 1, type=int)
+    paginacao = (
+        Noticia.query
+        .order_by(Noticia.publicada_em.desc())
+        .paginate(page=page, per_page=20, error_out=False)
+    )
+    return render_template('noticias.html', noticias=paginacao)
+
+
+@bp.route('/noticias/<int:noticia_id>/impacto')
+@login_required
+def analisar_impacto(noticia_id):
+    from .services.report_generator import gerar_relatorio_stream
+
+    n = Noticia.query.get_or_404(noticia_id)
+
+    if n.impacto_processado and n.resumo_impacto:
+        def _cached():
+            yield f"data: {json.dumps({'texto': n.resumo_impacto, 'done': True})}\n\n"
+        return Response(_cached(), content_type='text/event-stream')
+
+    ctx = {'titulo': n.titulo, 'fonte': n.fonte or ''}
+
+    def _stream_impacto():
+        chunks = []
+        try:
+            for chunk in gerar_relatorio_stream('impacto_noticia', ctx):
+                chunks.append(chunk)
+                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            conteudo = ''.join(chunks)
+            n.resumo_impacto = conteudo
+            n.impacto_processado = True
+            db.session.commit()
+            yield f"data: {json.dumps({'done': True})}\n\n"
+        except Exception as exc:
+            logger.error('Erro no impacto: %s', exc)
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return Response(
+        stream_with_context(_stream_impacto()),
+        content_type='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Brasileiros no exterior
+# ---------------------------------------------------------------------------
+
+@bp.route('/brasileiros')
+def brasileiros():
+    jogadores = (
+        Jogador.query
+        .filter(Jogador.nacionalidade.ilike('%Brazil%'))
+        .order_by(Jogador.time_atual, Jogador.nome)
+        .all()
+    )
+    times: dict[str, list] = {}
+    for j in jogadores:
+        times.setdefault(j.time_atual or 'Outros', []).append(j)
+    return render_template('brasileiros.html', times=times, total=len(jogadores))
+
+
+# ---------------------------------------------------------------------------
+# Retrospecto histórico (SSE)
+# ---------------------------------------------------------------------------
+
+@bp.route('/partida/<int:partida_id>/retrospecto')
+@login_required
+def retrospecto(partida_id):
+    from .services.report_generator import gerar_relatorio_stream
+
+    p = Partida.query.get_or_404(partida_id)
+    existing = (
+        ContextoHistorico.query
+        .filter(
+            ((ContextoHistorico.time1 == p.time_casa) & (ContextoHistorico.time2 == p.time_visitante)) |
+            ((ContextoHistorico.time1 == p.time_visitante) & (ContextoHistorico.time2 == p.time_casa))
+        ).first()
+    )
+    if existing and existing.narrativa:
+        def _cached():
+            yield f"data: {json.dumps({'texto': existing.narrativa, 'done': True})}\n\n"
+        return Response(_cached(), content_type='text/event-stream')
+
+    ctx = {'time1': p.time_casa, 'time2': p.time_visitante}
+
+    def _stream_retro():
+        chunks = []
+        try:
+            for chunk in gerar_relatorio_stream('retrospecto', ctx):
+                chunks.append(chunk)
+                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            narrativa = ''.join(chunks)
+            ch = ContextoHistorico(time1=p.time_casa, time2=p.time_visitante, narrativa=narrativa)
+            db.session.add(ch)
+            db.session.commit()
+            yield f"data: {json.dumps({'done': True})}\n\n"
+        except Exception as exc:
+            logger.error('Erro no retrospecto: %s', exc)
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return Response(
+        stream_with_context(_stream_retro()),
         content_type='text/event-stream',
         headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
     )

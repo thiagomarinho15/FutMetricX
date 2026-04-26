@@ -351,17 +351,20 @@ GET  /admin/                    → Painel admin (role=admin)
 - [x] `data_fetcher.py` — `importar_jogadores_iniciais()`: lineups das 10 partidas mais recentes
 - [x] Testar: 236 jogadores importados, perfil gerado (1611 chars), cache 1 linha SSE (2026-04-26)
 
-### Fase 4 — Notícias e Contexto
-- [ ] `app/models.py` — Noticia, ContextoHistorico
-- [ ] `app/services/news_fetcher.py` — RSS (ESPN, UOL, The Athletic, Cazé TV)
-- [ ] `app/services/scheduler.py` — APScheduler: fetch RSS a cada 30min
-- [ ] Rota `GET /noticias` — feed paginado
-- [ ] Rota `POST /noticias/<id>/impacto` — análise de impacto streaming
-- [ ] `news.js` — botão "Analisar impacto" com loading state
-- [ ] Rota `GET /brasileiros` — brasileiros no exterior
-- [ ] ContextoHistorico: geração de retrospecto entre clubes
-- [ ] Integrar contexto de notícias nos relatórios de partida
-- [ ] CSS: `news.css` — feed com fonte, data, badge de impacto
+### Fase 4 — Notícias e Contexto ✅ CONCLUÍDA
+- [x] `app/models.py` — Noticia (url VARCHAR 500 para limite MySQL 3072B) e ContextoHistorico
+- [x] `app/services/news_fetcher.py` — RSS feedparser (GE Globo, UOL, ESPN, BBC Football)
+- [x] `app/services/scheduler.py` — APScheduler BackgroundScheduler a cada 30min
+- [x] Rota `GET /noticias` — feed paginado (20 por página) com data e fonte
+- [x] Rota `GET /noticias/<id>/impacto` — análise SSE + cache no campo resumo_impacto
+- [x] `news.js` — botão "Analisar impacto" com loading state e SSE
+- [x] CSS: `news.css` — feed com badges de fonte, data, botão de análise
+- [x] Rota `GET /brasileiros` — 11 jogadores brasileiros (fix: country era string, não dict)
+- [x] ContextoHistorico: Rota `GET /partida/<id>/retrospecto` — SSE + cache por par de times
+- [x] Navbar: links Notícias e Brasileiros conectados às rotas reais
+- [x] `partida.html` — seção "Retrospecto Histórico" com botão de geração
+- [x] Admin: NoticiaAdmin + ContextoHistoricoAdmin (/admin/contextohistorico/)
+- [x] Testado: 45 notícias RSS, impacto (177 SSE), retrospecto (466 SSE), cache funcionando (2026-04-26)
 
 ### Fase 5 — Engajamento
 - [ ] Relatório pós-jogo narrativo (trigger automático após `status='encerrada'`)
@@ -451,4 +454,4 @@ WTForms==3.1.2
 
 ---
 
-*Última atualização: 2026-04-26 — Fase 0 ✅ + Fase 1 ✅ + Fase 2 ✅ + Fase 3 ✅ concluídas e testadas. App com 416 partidas, 236 jogadores, relatórios LLM (torcedor/profissional/locutor/perfil de jogador) com streaming SSE e cache. Próximo: Fase 4 (Notícias e Contexto — RSS feeds, APScheduler, análise de impacto).*
+*Última atualização: 2026-04-26 — Fases 0–4 ✅ concluídas. App com 416 partidas, 236 jogadores, 45 notícias RSS, relatórios LLM com SSE e cache, retrospecto histórico entre clubes. Próximo: Fase 5 (Engajamento — pós-jogo automático, cards compartilháveis, tier gates completos).*

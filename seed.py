@@ -7,6 +7,7 @@ from app import create_app
 from app.models import db, User, Role
 from app.security import hash_senha
 from app.services.data_fetcher import popular_partidas_iniciais, importar_jogadores_iniciais
+from app.services.news_fetcher import buscar_noticias
 
 app = create_app()
 
@@ -40,4 +41,7 @@ with app.app_context():
     popular_partidas_iniciais()
     print('Importando jogadores (lineups)...')
     importar_jogadores_iniciais()
+    print('Buscando notícias RSS...')
+    n = buscar_noticias()
+    print(f'  → {n} notícias importadas')
     print('Seed concluído.')

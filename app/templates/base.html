@@ -23,8 +23,8 @@
       <div class="navbar-links">
         <a href="{{ url_for('main.index') }}">Partidas</a>
         {% if current_user.is_authenticated %}
-          <a href="#">Brasileiros</a>
-          <a href="#">Notícias</a>
+          <a href="{{ url_for('main.brasileiros') }}">Brasileiros</a>
+          <a href="{{ url_for('main.noticias') }}">Notícias</a>
           <div class="user-dropdown">
             <button class="dropdown-toggle">{{ current_user.nome.split()[0] }} ▾</button>
             <div class="dropdown-menu">

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% from '_team_logo.html' import logo as team_logo_widget %}
+{% block title %}Brasileiros no Exterior — FutMetricX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <section class="page-header">
+    <h1>Brasileiros no Exterior</h1>
+    <p class="subtitle">
+      {{ total }} jogadores brasileiros nas nossas bases — clique para ver o perfil narrativo.
+    </p>
+  </section>
+
+  {% if times %}
+  {% for time_nome, jogadores in times.items() %}
+  <div class="players-section" style="margin-bottom:1.25rem">
+    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem">
+      {{ team_logo_widget(time_nome, 'sm') }}
+      <h2 class="section-title" style="margin:0">{{ time_nome }}</h2>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:0.4rem">
+      {% for j in jogadores %}
+      <a href="{{ url_for('main.jogador', jogador_id=j.id) }}" class="player-chip">
+        <span class="player-chip-name">{{ j.nome }}</span>
+        {% if j.posicao %}<span class="player-chip-pos">{{ j.posicao[:3] }}</span>{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="partidas-placeholder">
+    <div class="placeholder-icon">🇧🇷</div>
+    <p>Nenhum jogador brasileiro encontrado.</p>
+    <p class="text-muted">Os dados de jogadores são importados dos lineups StatsBomb.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

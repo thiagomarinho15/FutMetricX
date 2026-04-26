@@ -107,8 +107,13 @@ def _importar_lineup(match_id: int, temporada: str) -> int:
                 p0 = positions[0]
                 posicao = p0.get('position') if isinstance(p0, dict) else str(p0)
 
-            country = row.get('country', {})
-            nacionalidade = country.get('name') if isinstance(country, dict) else None
+            country = row.get('country')
+            if isinstance(country, dict):
+                nacionalidade = country.get('name')
+            elif isinstance(country, str) and country:
+                nacionalidade = country
+            else:
+                nacionalidade = None
 
             db.session.add(Jogador(
                 statsbomb_id=sid,

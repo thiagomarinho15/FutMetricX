@@ -38,7 +38,30 @@ def montar_contexto(partida) -> dict:
 
 
 def _montar_prompt(tipo: str, ctx: dict) -> str:
-    # Standalone player profile — different context structure (no match fields)
+    # Types with non-match context — handled before info computation
+    if tipo == 'impacto_noticia':
+        return (
+            "Você é um analista de futebol especializado em contexto extra-campo.\n"
+            "Analise o impacto desta notícia no próximo relatório de partida.\n\n"
+            f"Título: {ctx.get('titulo')}\n"
+            f"Fonte: {ctx.get('fonte')}\n\n"
+            "Responda em 3 pontos numerados: (1) qual time ou jogador é afetado, "
+            "(2) como isso impacta o desempenho em campo, "
+            "(3) o que um analista deve considerar ao gerar o relatório pré-jogo.\n"
+            "Responda em português do Brasil. Máximo 200 palavras."
+        )
+
+    if tipo == 'retrospecto':
+        return (
+            "Você é um narrador esportivo especializado em história do futebol.\n"
+            "Escreva um retrospecto histórico envolvente entre estes dois clubes.\n\n"
+            f"Clube 1: {ctx.get('time1')}\n"
+            f"Clube 2: {ctx.get('time2')}\n\n"
+            "Destaque: rivalidade histórica, confrontos marcantes, curiosidades e supremacia "
+            "estatística de cada lado. Tom: narrativo e apaixonado.\n"
+            "Responda em português do Brasil. Máximo 300 palavras."
+        )
+
     if tipo == 'perfil_jogador':
         return (
             "Você é um jornalista esportivo especializado em perfis de jogadores.\n"

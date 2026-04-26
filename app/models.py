@@ -86,3 +86,30 @@ class Relatorio(db.Model):
 
     def __repr__(self):
         return f'<Relatorio {self.tipo} partida={self.partida_id}>'
+
+
+class Noticia(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(500), nullable=False)
+    url = db.Column(db.String(500), unique=True, nullable=False)
+    fonte = db.Column(db.String(100))
+    publicada_em = db.Column(db.DateTime)
+    resumo_impacto = db.Column(db.Text)
+    time_relacionado = db.Column(db.String(100))
+    jogador_relacionado = db.Column(db.String(120))
+    impacto_processado = db.Column(db.Boolean, default=False)
+    criada_em = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f'<Noticia {self.titulo[:40]}>'
+
+
+class ContextoHistorico(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    time1 = db.Column(db.String(100), nullable=False)
+    time2 = db.Column(db.String(100), nullable=False)
+    narrativa = db.Column(db.Text)
+    atualizado_em = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f'<ContextoHistorico {self.time1} vs {self.time2}>'

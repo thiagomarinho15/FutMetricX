@@ -9,6 +9,49 @@ document.querySelectorAll('.btn-modo').forEach(btn => {
   });
 });
 
+/* SSE streaming — retrospecto histórico */
+function gerarRetrospecto(partidaId) {
+  const outputEl = document.getElementById('output-retrospecto');
+  const btnEl    = document.getElementById('btn-retrospecto');
+  const loadWrap = document.getElementById('loading-retrospecto');
+
+  if (!outputEl) return;
+  if (btnEl) btnEl.disabled = true;
+  if (loadWrap) loadWrap.style.display = 'block';
+  outputEl.textContent = '';
+  outputEl.classList.remove('report-error');
+
+  const src = new EventSource('/partida/' + partidaId + '/retrospecto');
+
+  src.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    if (data.chunk) outputEl.textContent += data.chunk;
+    if (data.texto) outputEl.textContent = data.texto;
+    if (data.done) {
+      src.close();
+      if (loadWrap) loadWrap.style.display = 'none';
+      if (btnEl) btnEl.style.display = 'none';
+    }
+    if (data.error) {
+      src.close();
+      if (loadWrap) loadWrap.style.display = 'none';
+      outputEl.textContent = 'Erro: ' + data.error;
+      outputEl.classList.add('report-error');
+      if (btnEl) btnEl.disabled = false;
+    }
+  };
+
+  src.onerror = function () {
+    src.close();
+    if (loadWrap) loadWrap.style.display = 'none';
+    if (outputEl.textContent === '') {
+      outputEl.textContent = 'Falha na conexão. Tente novamente.';
+      outputEl.classList.add('report-error');
+    }
+    if (btnEl) btnEl.disabled = false;
+  };
+}
+
 /* SSE streaming — player profile */
 function gerarPerfil(jogadorId) {
   const outputEl = document.getElementById('output-perfil_jogador');

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Notícias — FutMetricX{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/news.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <section class="page-header">
+    <h1>Notícias</h1>
+    <p class="subtitle">Feed agregado de futebol — analise o impacto de qualquer notícia com IA.</p>
+  </section>
+
+  {% if noticias.items %}
+  <div class="news-list">
+    {% for n in noticias.items %}
+    <div class="news-item">
+      <div class="news-top">
+        <div class="news-body">
+          <div class="news-fonte-data">
+            {% if n.fonte %}<span class="news-fonte">{{ n.fonte }}</span>{% endif %}
+            {% if n.publicada_em %}
+            <span class="news-data">{{ n.publicada_em.strftime('%d/%m/%Y %H:%M') }}</span>
+            {% endif %}
+          </div>
+          <a href="{{ n.url }}" target="_blank" rel="noopener" class="news-titulo">
+            {{ n.titulo }}
+          </a>
+        </div>
+        <div class="news-actions">
+          {% if n.impacto_processado %}
+          <span class="badge-processado">✅ Analisado</span>
+          {% elif current_user.is_authenticated %}
+          <button class="btn-impacto" id="btn-impacto-{{ n.id }}"
+                  onclick="analisarImpacto({{ n.id }})">
+            🔍 Analisar impacto
+          </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <div id="impacto-area-{{ n.id }}" class="impacto-area"
+           style="{{ '' if n.impacto_processado else 'display:none' }}">
+        <div id="loading-impacto-{{ n.id }}" class="loading-bar-wrap" style="display:none">
+          <div class="loading-bar"></div>
+        </div>
+        <div id="output-impacto-{{ n.id }}" class="impacto-output">
+          {{ n.resumo_impacto or '' }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# Pagination #}
+  {% if noticias.pages > 1 %}
+  <div class="pagination">
+    {% if noticias.has_prev %}
+    <a href="{{ url_for('main.noticias', page=noticias.prev_num) }}" class="page-link">← Anterior</a>
+    {% endif %}
+    {% for pg in noticias.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if pg %}
+      <a href="{{ url_for('main.noticias', page=pg) }}"
+         class="page-link {{ 'active' if pg == noticias.page }}">{{ pg }}</a>
+      {% else %}
+      <span class="page-link disabled">…</span>
+      {% endif %}
+    {% endfor %}
+    {% if noticias.has_next %}
+    <a href="{{ url_for('main.noticias', page=noticias.next_num) }}" class="page-link">Próxima →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="partidas-placeholder">
+    <div class="placeholder-icon">📰</div>
+    <p>Nenhuma notícia ainda.</p>
+    <p class="text-muted">O feed RSS é atualizado automaticamente a cada 30 minutos.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/news.js') }}"></script>
+{% endblock %}
