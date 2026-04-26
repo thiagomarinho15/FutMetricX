@@ -29,6 +29,18 @@ def create_app():
     def nl2br(text: str) -> Markup:
         return Markup('<br>'.join(escape(p) for p in str(text).split('\n')))
 
+    import json as _json
+
+    def from_json(value):
+        if not value:
+            return {}
+        try:
+            return _json.loads(value)
+        except Exception:
+            return {}
+
+    app.jinja_env.filters['from_json'] = from_json
+
     app.jinja_env.globals.update(
         team_logo=team_logo,
         team_initial=team_initial,

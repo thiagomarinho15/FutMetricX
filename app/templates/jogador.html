@@ -1,64 +1,361 @@
 {% extends 'base.html' %}
-{% from '_team_logo.html' import logo as team_logo_widget %}
 {% block title %}{{ jogador.nome }} — FutMetricX{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/report.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+<style>
+/* ── Player Header ───────────────────────────────────────────────────── */
+.player-hero {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.player-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.player-avatar-lg {
+  width: 80px; height: 80px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-subtle) 100%);
+  border: 2px solid var(--border-default);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+}
+
+.player-info { flex: 1; min-width: 0; }
+
+.player-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  line-height: 1.1;
+}
+
+.player-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.player-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.player-tag.team {
+  background: var(--accent-primary-glow);
+  border-color: rgba(0,255,135,.2);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+/* ── Metrics Grid ────────────────────────────────────────────────────── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 16px 14px;
+  transition: border-color .15s;
+}
+.metric-card:hover { border-color: var(--border-default); }
+
+.metric-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.metric-val.nd { font-size: 1rem; color: var(--text-muted); }
+
+.metric-label {
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.metric-context {
+  margin-top: 6px;
+  font-size: .75rem;
+  color: var(--accent-amber);
+  font-weight: 500;
+}
+
+/* ── Narrative section ───────────────────────────────────────────────── */
+.narrative-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.narrative-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.narrative-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.narrative-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .6875rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--accent-amber);
+  background: var(--accent-amber-glow);
+  border: 1px solid rgba(255,184,48,.2);
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+}
+
+.narrative-text {
+  font-size: .9375rem;
+  line-height: 1.75;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.narrative-cta {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+
+.report-loading {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; font-size: .875rem; color: var(--text-muted);
+}
+.report-loading-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent-amber);
+  animation: loadPulse 1s ease-in-out infinite;
+}
+@keyframes loadPulse {
+  0%,100% { transform:scale(1); opacity:1; }
+  50% { transform:scale(.6); opacity:.4; }
+}
+
+.gate-msg {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  background: var(--bg-elevated); border: 1px solid var(--border-default);
+  border-radius: var(--radius-md); font-size: .875rem; color: var(--text-muted);
+}
+.gate-msg a { color: var(--accent-primary); }
+
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .8125rem; color: var(--text-muted); margin-bottom: 16px;
+  transition: color .15s;
+}
+.back-link:hover { color: var(--text-primary); }
+
+@media (max-width: 767px) {
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .player-name  { font-size: 1.375rem; }
+  .player-avatar-lg { width: 64px; height: 64px; font-size: 1.375rem; }
+  .player-hero  { gap: 16px; padding: 20px 16px; }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <a href="javascript:history.back()" class="btn-back">← Voltar</a>
+{% set stats = jogador.stats_json | from_json if jogador.stats_json else {} %}
+{% set initials = jogador.nome.split()[0][0] ~ (jogador.nome.split()[-1][0] if jogador.nome.split()|length > 1 else '') %}
 
-  <div class="jogador-header">
-    {{ team_logo_widget(jogador.time_atual or '', 'lg') }}
-    <div class="jogador-info">
-      <h1 class="jogador-nome">{{ jogador.nome }}</h1>
-      <div class="jogador-meta">
-        {% if jogador.posicao %}
-        <span class="meta-item">{{ jogador.posicao }}</span>
-        {% endif %}
-        {% if jogador.time_atual %}
-        <span class="meta-item">{{ jogador.time_atual }}</span>
-        {% endif %}
-        {% if jogador.nacionalidade %}
-        <span class="meta-item">🌍 {{ jogador.nacionalidade }}</span>
-        {% endif %}
-        {% if jogador.temporada %}
-        <span class="meta-item">{{ jogador.temporada }}</span>
-        {% endif %}
-      </div>
+<a href="javascript:history.back()" class="back-link">
+  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+  </svg>
+  Voltar
+</a>
+
+<!-- ── Player Hero ──────────────────────────────────────────────────── -->
+<div class="player-hero">
+  <div class="player-avatar-wrap">
+    <div class="player-avatar-lg">{{ initials|upper }}</div>
+  </div>
+  <div class="player-info">
+    <h1 class="player-name">{{ jogador.nome }}</h1>
+    <div class="player-tags">
+      {% if jogador.time_atual %}
+      <span class="player-tag team">{{ jogador.time_atual }}</span>
+      {% endif %}
+      {% if jogador.posicao %}
+      <span class="player-tag">{{ jogador.posicao }}</span>
+      {% endif %}
+      {% if jogador.nacionalidade %}
+      <span class="player-tag">
+        {% if 'Brazil' in jogador.nacionalidade %}🇧🇷{% elif 'England' in jogador.nacionalidade %}🏴󠁧󠁢󠁥󠁮󠁧󠁿{% elif 'Spain' in jogador.nacionalidade %}🇪🇸{% elif 'France' in jogador.nacionalidade %}🇫🇷{% elif 'Germany' in jogador.nacionalidade %}🇩🇪{% elif 'Argentina' in jogador.nacionalidade %}🇦🇷{% elif 'Portugal' in jogador.nacionalidade %}🇵🇹{% else %}🌍{% endif %}
+        {{ jogador.nacionalidade }}
+      </span>
+      {% endif %}
+      {% if jogador.temporada %}
+      <span class="player-tag">{{ jogador.temporada }}</span>
+      {% endif %}
     </div>
   </div>
+</div>
 
-  <div class="relatorio-section">
-    <h2 class="section-title">Perfil Narrativo</h2>
-
-    {% if relatorio %}
-      <div class="report-output">{{ relatorio.conteudo }}</div>
+<!-- ── Metrics Grid ─────────────────────────────────────────────────── -->
+<div class="metrics-grid">
+  <div class="metric-card">
+    {% set goals = stats.get('goals', stats.get('gols')) %}
+    {% if goals is not none %}
+    <div class="metric-val">{{ goals }}</div>
     {% else %}
-      {% if current_user.is_authenticated %}
-      <button id="btn-gerar-perfil_jogador"
-              class="btn-gerar btn-gerar-torcedor"
-              onclick="gerarPerfil({{ jogador.id }})">
-        ⚡ Gerar Perfil do Jogador
-      </button>
-      {% else %}
-      <p class="tier-gate-msg">
-        Faça <a href="{{ url_for('main.login') }}">login</a> para gerar perfis.
-      </p>
-      {% endif %}
-      <div id="loading-perfil_jogador" class="loading-bar-wrap" style="display:none">
-        <div class="loading-bar"></div>
-      </div>
-      <div id="output-perfil_jogador" class="report-output"></div>
+    <div class="metric-val nd">N/D</div>
+    {% endif %}
+    <div class="metric-label">Gols</div>
+  </div>
+
+  <div class="metric-card">
+    {% set assists = stats.get('assists', stats.get('assistencias')) %}
+    {% if assists is not none %}
+    <div class="metric-val">{{ assists }}</div>
+    {% else %}
+    <div class="metric-val nd">N/D</div>
+    {% endif %}
+    <div class="metric-label">Assistências</div>
+  </div>
+
+  <div class="metric-card">
+    {% set xg = stats.get('xg', stats.get('expected_goals')) %}
+    {% if xg is not none %}
+    <div class="metric-val" style="color:var(--accent-primary);">{{ "%.2f"|format(xg|float) }}</div>
+    {% else %}
+    <div class="metric-val nd">N/D</div>
+    {% endif %}
+    <div class="metric-label">xG</div>
+    {% if xg is not none %}
+    <div class="metric-context">Expected Goals</div>
     {% endif %}
   </div>
+
+  <div class="metric-card">
+    {% set minutes = stats.get('minutes', stats.get('minutos', stats.get('minutes_played'))) %}
+    {% if minutes is not none %}
+    <div class="metric-val" style="font-size:1.5rem;">{{ minutes }}</div>
+    {% else %}
+    <div class="metric-val nd">N/D</div>
+    {% endif %}
+    <div class="metric-label">Minutos</div>
+  </div>
+</div>
+
+<!-- ── Narrative Analysis ───────────────────────────────────────────── -->
+<div class="narrative-section">
+  <div class="narrative-header">
+    <h2 class="narrative-title">Análise Narrativa</h2>
+    <span class="narrative-badge">🤖 FutMetricX AI</span>
+  </div>
+
+  {% if relatorio %}
+  <div class="narrative-text">{{ relatorio.conteudo }}</div>
+  {% else %}
+  <div class="narrative-cta">
+    {% if current_user.is_authenticated %}
+    <button class="btn-generate fan" id="btn-gerar-perfil_jogador"
+            onclick="gerarPerfil({{ jogador.id }})"
+            style="padding:10px 20px; border-radius:var(--radius-md); font-family:'DM Sans',sans-serif;
+                   font-size:.9375rem; font-weight:600; cursor:pointer; border:none;
+                   background:var(--accent-amber); color:var(--text-inverse);
+                   display:inline-flex; align-items:center; gap:8px; transition:all .15s;">
+      ⚡ Gerar perfil narrativo
+    </button>
+    <span style="font-size:.8125rem; color:var(--text-muted);">Análise editorial gerada por IA</span>
+    {% else %}
+    <div class="gate-msg">
+      <span>🔒</span>
+      <span>Faça <a href="{{ url_for('main.login') }}">login</a> para gerar perfis.</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <div id="narrative-generating" style="display:none;">
+    <div class="report-loading">
+      <div class="report-loading-dot"></div> Gerando perfil narrativo...
+    </div>
+    <div class="narrative-text" id="output-perfil_jogador"></div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/report.js') }}"></script>
+<script>
+function gerarPerfil(jogadorId) {
+  const btn      = document.getElementById('btn-gerar-perfil_jogador');
+  const wrap     = document.getElementById('narrative-generating');
+  const outputEl = document.getElementById('output-perfil_jogador');
+
+  if (!outputEl) return;
+  if (btn) btn.disabled = true;
+  if (wrap) wrap.style.display = 'block';
+  outputEl.textContent = '';
+
+  const src = new EventSource('/jogador/' + jogadorId + '/gerar');
+
+  src.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data.chunk) outputEl.textContent += data.chunk;
+    if (data.texto) outputEl.textContent = data.texto;
+    if (data.done) {
+      src.close();
+      const loading = wrap ? wrap.querySelector('.report-loading') : null;
+      if (loading) loading.style.display = 'none';
+      if (btn) btn.style.display = 'none';
+    }
+    if (data.error) {
+      src.close();
+      outputEl.textContent = 'Erro: ' + data.error;
+      if (btn) btn.disabled = false;
+    }
+  };
+
+  src.onerror = function() {
+    src.close();
+    if (outputEl.textContent === '') outputEl.textContent = 'Falha na conexão.';
+    if (btn) btn.disabled = false;
+  };
+}
+</script>
 {% endblock %}
