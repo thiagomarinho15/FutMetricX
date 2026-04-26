@@ -4,11 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}FutMetricX{% endblock %}</title>
+  <meta name="theme-color" content="#1a472a">
+  <meta name="description" content="Analytics de futebol com IA — relatórios para torcedores e analistas">
+  <link rel="manifest" href="/static/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
   {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -23,8 +27,8 @@
       <div class="navbar-links">
         <a href="{{ url_for('main.index') }}">Partidas</a>
         {% if current_user.is_authenticated %}
-          <a href="{{ url_for('main.brasileiros') }}">Brasileiros</a>
-          <a href="{{ url_for('main.noticias') }}">Notícias</a>
+          <a href="{{ url_for('main.brasileiros') }}" class="nav-link-hide-mobile">Brasileiros</a>
+          <a href="{{ url_for('main.noticias') }}" class="nav-link-hide-mobile">Notícias</a>
           <div class="user-dropdown">
             <button class="dropdown-toggle">{{ current_user.nome.split()[0] }} ▾</button>
             <div class="dropdown-menu">
@@ -50,5 +54,12 @@
 
   <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
   {% block extra_js %}{% endblock %}
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

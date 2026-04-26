@@ -6,7 +6,8 @@ import logging
 
 from flask import (
     Blueprint, render_template, redirect, url_for,
-    flash, request, current_app, Response, stream_with_context
+    flash, request, current_app, Response, stream_with_context,
+    send_from_directory
 )
 from flask_login import login_user, logout_user, login_required, current_user
 
@@ -166,6 +167,20 @@ def gerar_perfil_jogador(jogador_id):
         stream_with_context(_stream()),
         content_type='text/event-stream',
         headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
+    )
+
+
+# ---------------------------------------------------------------------------
+# PWA helpers
+# ---------------------------------------------------------------------------
+
+@bp.route('/sw.js')
+def service_worker():
+    import os
+    return send_from_directory(
+        os.path.join(current_app.root_path, 'static', 'js'),
+        'sw.js',
+        mimetype='application/javascript',
     )
 
 

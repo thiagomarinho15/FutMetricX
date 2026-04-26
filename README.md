@@ -59,63 +59,115 @@ Agregação de notícias de fontes credenciadas via RSS. Cada notícia é proces
 
 ---
 
-## Arquitetura Técnica
+## Stack Implementada
 
-```
-Fontes de Dados (StatsBomb / FBref / RSS)
-        ↓
-Pipeline de Ingestão (jobs agendados)
-        ↓
-PostgreSQL (dados estruturados)
-        ↓
-RAG (banco vetorial — contexto histórico, perfis, notícias)
-        ↓
-LLM — Claude API (geração narrativa por prompts especializados)
-        ↓
-Backend FastAPI
-        ↓
-Frontend Next.js (PWA, mobile-first, toggle dual-tone)
-```
-
-**Stack planejada:**
-- Backend: Python + FastAPI
-- Frontend: Next.js (PWA, mobile-first)
-- LLM: Claude API
-- RAG: Pinecone ou Supabase pgvector
-- Banco de dados: PostgreSQL
-- Ingestão: StatsBomb Open Data + FBref (MVP) → Opta/Stats Perform ou SportRadar
-- Infra MVP: Railway ou Render
+| Camada | Tecnologia |
+|---|---|
+| Backend | Python 3.12 + Flask |
+| ORM | SQLAlchemy + Flask-Migrate |
+| Banco | MySQL 8.0 |
+| LLM | Groq (primário) → Gemini → Ollama (fallback) |
+| Dados | StatsBomb Open Data |
+| Notícias | feedparser (RSS — GE Globo, UOL, ESPN, BBC) |
+| Jobs | APScheduler (RSS 30min + pré-jogo D-1) |
+| Servidor | Gunicorn |
+| Infra | Docker + docker-compose |
+| PWA | manifest.json + service worker |
 
 ---
 
-## Roadmap de MVP
+## Quick Start
 
-**Fase 1 — Core**
-- [ ] Relatório pré-jogo dual-tone (Premier League + Brasileirão Série A)
-- [ ] Perfil narrativo do jogador-chave
-- [ ] Cobertura de brasileiros no exterior
-- [ ] Feed de notícias com RSS
+### Pré-requisitos
 
-**Fase 2 — Engajamento**
-- [ ] Relatório pós-jogo narrativo
-- [ ] Contexto histórico entre clubes
-- [ ] Botão "Analisar impacto" nas notícias
-- [ ] Cards compartilháveis para Instagram e X
+- Docker + docker-compose
+- Chave Groq gratuita: [console.groq.com](https://console.groq.com)
 
-**Fase 3 — Profissional**
-- [ ] Modo Locutor
-- [ ] Scouting por linguagem natural
-- [ ] Exportação de relatórios em PDF
-- [ ] API para integração com ferramentas de terceiros
+### 1. Clone
+
+```bash
+git clone https://github.com/thiagomarinho15/FutMetricX.git
+cd FutMetricX
+```
+
+### 2. Crie o `.env`
+
+```env
+SECRET_KEY=<string-aleatoria-forte>
+DB_HOST=db
+DB_PORT=3306
+DB_NAME=futmetricx
+DB_USER=futmetricx_user
+DB_PASSWORD=<senha>
+DB_ROOT_PASSWORD=<senha-root>
+SESSION_COOKIE_SECURE=False
+ADMIN_EMAIL=admin@futmetricx.com
+ADMIN_PASSWORD=<senha-admin>
+
+GROQ_KEY_1=<sua-chave-groq>
+GROQ_MODEL=llama-3.3-70b-versatile
+
+GEMINI_KEY_1=
+GEMINI_MODEL=gemini-2.0-flash
+
+OLLAMA_HOST=host.docker.internal
+OLLAMA_MODEL=llama3.2
+```
+
+### 3. Inicie
+
+```bash
+docker compose up --build
+```
+
+Na primeira execução (~60s o app sobe, seed demora ~30s mais):
+- Migrações geradas e aplicadas automaticamente
+- 416 partidas importadas (StatsBomb Open Data)
+- 236 jogadores com posições e nacionalidades
+- Notícias importadas dos feeds RSS
+
+**Acesse: http://localhost:8000**
+
+Painel admin: `/admin/` (credenciais do `.env`)
+
+---
+
+## Desenvolvimento
+
+Ao modificar `models.py` (novos campos/tabelas):
+
+```bash
+docker compose down -v && docker compose up --build
+```
+
+Ao modificar apenas templates, CSS ou JS, primeiro rebuild a imagem:
+
+```bash
+docker compose up --build -d
+```
+
+> Não há bind mount — código é baked na imagem. Qualquer mudança Python requer rebuild.
+
+---
+
+## Produção
+
+Antes de expor publicamente:
+
+```env
+SESSION_COOKIE_SECURE=True
+```
+
+Trocar `ADMIN_PASSWORD` por senha forte.
 
 ---
 
 ## Diferenciais
 
-- **LLM como camada de interpretação** — não de decoração. Transforma dados em argumentos, não em gráficos mais bonitos.
-- **Contexto extra-campo integrado** — performance + notícias + bastidores, cruzados automaticamente.
-- **Foco ibero-americano** — análise de qualidade em português, com preço acessível e cobertura de ligas brasileiras.
-- **Dual-tone nativo** — um produto, dois públicos, a mesma engine.
+- **Dual-tone nativo** — um produto, dois públicos, a mesma engine
+- **Contexto extra-campo** — notícias RSS cruzadas com dados de performance
+- **Multi-provider LLM** — Groq → Gemini → Ollama, sem ponto único de falha
+- **Foco ibero-americano** — em português, ligas europeias + abertura para brasileirão
 
 ---
 
