@@ -187,6 +187,7 @@
 {% if noticias.items %}
 <div class="news-grid">
   {% for n in noticias.items %}
+  {% set idx = loop.index0 %}
   {% set fonte_lower = (n.fonte or '')|lower %}
   {% if 'espn' in fonte_lower %}{% set fonte_cls = 'fonte-espn' %}
   {% elif 'globo' in fonte_lower or 'ge.' in fonte_lower %}{% set fonte_cls = 'fonte-globo' %}
@@ -195,7 +196,8 @@
   {% elif 'bbc' in fonte_lower %}{% set fonte_cls = 'fonte-bbc' %}
   {% else %}{% set fonte_cls = 'fonte-default' %}{% endif %}
 
-  <div class="news-card" id="card-{{ n.id }}">
+  <div class="news-card stagger-item" id="card-{{ n.id }}"
+       style="animation-delay: {{ (idx * 0.04) | round(2) }}s">
     <div class="news-card-top">
       <div class="news-card-body">
         <div class="news-meta">

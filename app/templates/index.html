@@ -96,6 +96,7 @@
 }
 .fixture-card:last-child { border-bottom: none; }
 .fixture-card:hover { background: var(--bg-elevated); }
+.fixture-card:active { transform: scale(.995); }
 
 .fc-time {
   font-family: 'DM Mono', monospace;
@@ -278,7 +279,8 @@
 <!-- Fixture groups -->
 {% if fixture_groups %}
   {% for comp_name, group in fixture_groups.items() %}
-  <div class="comp-group" id="group-{{ loop.index }}">
+  <div class="comp-group stagger-item" id="group-{{ loop.index }}"
+       style="animation-delay: {{ (loop.index0 * 0.06) | round(2) }}s">
     <div class="comp-header" onclick="toggleGroup('group-{{ loop.index }}')">
       <div class="comp-icon">
         {% if 'Champions' in comp_name %}🏆

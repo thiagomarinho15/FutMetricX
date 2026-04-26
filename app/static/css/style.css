@@ -301,6 +301,23 @@ img { display: block; max-width: 100%; }
 .flash-warning { background:rgba(255,184,48,.12); border-color:rgba(255,184,48,.3); color:#FFB830; }
 .flash-info    { background:rgba(108,142,255,.12);border-color:rgba(108,142,255,.3);color:#6C8EFF; }
 
+/* ── Stagger reveal ───────────────────────────────────────────────────────── */
+@keyframes staggerFadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stagger-item {
+  animation: staggerFadeUp .3s ease both;
+}
+
+/* ── Score flash (when a live score updates) ──────────────────────────────── */
+@keyframes scoreFlash {
+  0%   { color: var(--text-primary); }
+  30%  { color: var(--accent-primary); transform: scale(1.08); }
+  100% { color: var(--text-primary); transform: scale(1); }
+}
+.score-updated { animation: scoreFlash .6s ease; }
+
 /* ── Live Dot ─────────────────────────────────────────────────────────────── */
 @keyframes live-pulse {
   0%,100% { opacity:1; transform:scale(1); }
@@ -421,10 +438,30 @@ img { display: block; max-width: 100%; }
   .sidebar-left { display: none; }
   .bottom-nav { display: flex; }
   .app-main { margin-left: 0; padding-bottom: var(--bottom-nav-h); }
-  .main-content { padding: 16px; }
-  .topbar { padding: 0 16px; }
+  .main-content { padding: 16px; max-width: 100%; }
+  .topbar { padding: 0 12px; gap: 8px; }
+  /* hide search on mobile — keep only actions */
+  .topbar-search { display: none; }
+  .topbar-mobile-title { display: block !important; }
+  /* page-heading wraps gracefully */
+  .page-heading { font-size: 1.25rem; flex-wrap: wrap; gap: 6px; }
+  /* auth card full-width */
+  .auth-card { padding: 28px 20px; }
+}
+
+/* Touch-friendly tap targets */
+@media (hover: none) and (pointer: coarse) {
+  .sidebar-nav-item { padding: 10px 12px; }
+  .stats-tab-btn   { padding: 14px 16px; }
+  .date-btn        { min-width: 56px; }
+}
+
+/* Very small phones */
+@media (max-width: 374px) {
+  .main-content { padding: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  .mode-slider { transition: none !important; }
 }
