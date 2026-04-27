@@ -16,12 +16,7 @@ env/
 .env.local
 .DS_Store
 *.log
-migrations/README
-migrations/alembic.ini
-migrations/env.py
-migrations/script.py.mako
-migrations/versions/*.py
-!migrations/versions/.gitkeep
+migrations/versions/__pycache__/
 instance/
 .pytest_cache/
 .coverage

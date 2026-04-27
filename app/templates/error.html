@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}{{ code }} — FutMetricX{% endblock %}
+
+{% block content %}
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+  min-height: 60vh;
+">
+  <div style="
+    font-family: 'DM Mono', monospace;
+    font-size: 5rem;
+    font-weight: 700;
+    color: var(--border-default);
+    line-height: 1;
+    margin-bottom: 24px;
+  ">{{ code }}</div>
+
+  <h1 style="
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  ">{{ title }}</h1>
+
+  <p style="
+    font-size: .9375rem;
+    color: var(--text-muted);
+    max-width: 400px;
+    line-height: 1.65;
+    margin-bottom: 32px;
+  ">{{ message }}</p>
+
+  <a href="{{ url_for('main.index') }}" style="
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent-primary-glow);
+    border: 1px solid rgba(0,255,135,.2);
+    border-radius: var(--radius-md);
+    font-size: .9375rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    transition: background .15s;
+  ">
+    ← Voltar ao início
+  </a>
+</div>
+{% endblock %}

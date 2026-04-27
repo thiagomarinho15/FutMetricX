@@ -3,6 +3,7 @@ import time
 from datetime import datetime, timezone
 
 import feedparser
+from sqlalchemy.exc import IntegrityError
 
 from ..models import db, Noticia
 
@@ -23,6 +24,7 @@ def buscar_noticias() -> int:
         try:
             total += _processar_feed(fonte, url)
         except Exception as exc:
+            db.session.rollback()
             logger.warning('Feed %s falhou: %s', fonte, exc)
     if total:
         logger.info('%d novas notícias importadas', total)
@@ -34,22 +36,33 @@ def _processar_feed(fonte: str, url: str) -> int:
     added = 0
     for entry in feed.entries[:25]:
         link = (entry.get('link') or '').strip()[:500]
-        if not link or Noticia.query.filter_by(url=link).first():
+        if not link:
+            continue
+
+        # Use no_autoflush so checking for existing URLs doesn't trigger premature flushes
+        with db.session.no_autoflush:
+            exists = Noticia.query.filter_by(url=link).first()
+        if exists:
             continue
 
         titulo = (entry.get('title') or 'Sem título')[:500]
         publicada_em = _parse_pub_date(entry)
 
-        db.session.add(Noticia(
-            titulo=titulo,
-            url=link,
-            fonte=fonte,
-            publicada_em=publicada_em,
-        ))
-        added += 1
+        try:
+            db.session.add(Noticia(
+                titulo=titulo,
+                url=link,
+                fonte=fonte,
+                publicada_em=publicada_em,
+            ))
+            db.session.commit()
+            added += 1
+        except IntegrityError:
+            db.session.rollback()
+        except Exception as exc:
+            db.session.rollback()
+            logger.warning('news item %s error: %s', link[:60], exc)
 
-    if added:
-        db.session.commit()
     return added
 
 

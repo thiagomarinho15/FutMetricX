@@ -115,6 +115,7 @@ def index():
     from .models import Fixture, Competition, Team
 
     date_str = request.args.get('date')
+    comp_filter = request.args.get('filter', '').strip()
     today = datetime.now(timezone.utc).date()
     try:
         selected_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else today
@@ -125,12 +126,18 @@ def index():
                          tzinfo=timezone.utc)
     day_end = day_start + timedelta(days=1)
 
-    fixtures = (
+    query = (
         Fixture.query
         .filter(Fixture.scheduled_at >= day_start, Fixture.scheduled_at < day_end)
-        .order_by(Fixture.scheduled_at)
-        .all()
     )
+
+    # Apply competition filter when provided via sidebar links
+    if comp_filter:
+        query = query.join(Competition, Fixture.competition_id == Competition.id).filter(
+            Competition.name.ilike(f'%{comp_filter}%')
+        )
+
+    fixtures = query.order_by(Fixture.scheduled_at).all()
 
     # Group by competition name preserving order of first appearance
     groups: dict[str, dict] = {}
@@ -157,7 +164,8 @@ def index():
                            selected_date=selected_date,
                            today=today,
                            dates=dates,
-                           recent=recent)
+                           recent=recent,
+                           active_filter=comp_filter)
 
 
 @bp.route('/jogo/<int:fixture_id>')
@@ -443,6 +451,21 @@ def retrospecto(partida_id):
         content_type='text/event-stream',
         headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
     )
+
+
+@bp.app_errorhandler(404)
+def not_found(e):
+    return render_template('error.html', code=404,
+                           title='Página não encontrada',
+                           message='A página que você procura não existe ou foi movida.'), 404
+
+
+@bp.app_errorhandler(500)
+def server_error(e):
+    logger.error('500 error: %s', e)
+    return render_template('error.html', code=500,
+                           title='Erro interno',
+                           message='Algo deu errado no servidor. Tente novamente em instantes.'), 500
 
 
 @bp.route('/partida/<int:partida_id>/gerar')

@@ -1,33 +1,55 @@
 """Fetches per-player match statistics from API-Football for finished fixtures."""
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from sqlalchemy import exists
 
 from ..models import db, Fixture, Player, Team, MatchStats
 from ..clients.api_football import get_fixture_players
+from ..services import budget_tracker
 
 logger = logging.getLogger(__name__)
 
+# Only backfill fixtures from the last N days to avoid burning the daily budget
+_BACKFILL_DAYS = 3
+# Max fixtures per run to stay within daily budget
+_MAX_PER_RUN = 15
+
 
 def run(fixture_ids: list[int] | None = None) -> int:
-    """Process player stats for finished fixtures not yet in match_stats."""
+    """Process player stats for recently finished fixtures not yet in match_stats."""
     logger.info("player_stats_worker: starting")
 
     if fixture_ids:
         fixtures = Fixture.query.filter(Fixture.id.in_(fixture_ids)).all()
     else:
-        finished = Fixture.query.filter_by(status='finished').all()
-        fixtures = [
-            f for f in finished
-            if not MatchStats.query.filter_by(fixture_id=f.id).first()
-        ]
+        cutoff = datetime.now(timezone.utc) - timedelta(days=_BACKFILL_DAYS)
+        # Single efficient query: finished fixtures in last N days with no match stats
+        fixtures = (
+            Fixture.query
+            .filter(
+                Fixture.status == 'finished',
+                Fixture.scheduled_at >= cutoff,
+                ~exists().where(MatchStats.fixture_id == Fixture.id),
+            )
+            .order_by(Fixture.scheduled_at.desc())
+            .limit(_MAX_PER_RUN)
+            .all()
+        )
 
     total = 0
     for fixture in fixtures:
+        if not budget_tracker.consume(1):
+            logger.warning("player_stats_worker: budget exhausted, stopping")
+            break
         try:
-            total += _process(fixture)
+            added = _process(fixture)
+            total += added
+            if added:
+                db.session.commit()
         except Exception as e:
+            db.session.rollback()
             logger.error("player_stats_worker fixture %d: %s", fixture.id, e)
-    db.session.commit()
+
     logger.info("player_stats_worker: done, %d records added", total)
     return total
 

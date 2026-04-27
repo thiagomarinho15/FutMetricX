@@ -252,7 +252,7 @@
 {% endfor %}
 
 <div class="page-heading">
-  Fixtures
+  {% if active_filter %}{{ active_filter }}{% else %}Fixtures{% endif %}
   {% if live_count.n > 0 %}
   <span class="live-badge">
     <span class="live-dot"></span>
@@ -260,6 +260,10 @@
   </span>
   {% endif %}
   <small>{{ selected_date.strftime('%d de %B, %Y') }}</small>
+  {% if active_filter %}
+  <a href="{{ url_for('main.index') }}?date={{ selected_date.strftime('%Y-%m-%d') }}"
+     style="font-size:.75rem; color:var(--text-muted); margin-left:4px;">✕ limpar filtro</a>
+  {% endif %}
 </div>
 
 <!-- Date Strip -->
@@ -268,7 +272,8 @@
   {% set day_names = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'] %}
   {% set is_today = (d == today) %}
   {% set is_selected = (d == selected_date) %}
-  <a href="{{ url_for('main.index') }}?date={{ d.strftime('%Y-%m-%d') }}"
+  {% set filter_param = ('&filter=' ~ active_filter) if active_filter else '' %}
+  <a href="{{ url_for('main.index') }}?date={{ d.strftime('%Y-%m-%d') }}{{ filter_param }}"
      class="date-btn {% if is_selected %}active{% endif %}">
     <span class="date-btn-day">{% if is_today %}Hoje{% else %}{{ day_names[d.weekday()] }}{% endif %}</span>
     <span class="date-btn-num">{{ d.strftime('%d') }}</span>
@@ -306,7 +311,7 @@
       {% set away_name = f.away_team.name if f.away_team else '?' %}
       {% set home_init = home_name[:3]|upper %}
       {% set away_init = away_name[:3]|upper %}
-      {% set has_rel = f.relatorios|length > 0 if f.relatorios is defined else false %}
+      {% set has_rel = (f.relatorios | length > 0) if f.relatorios is not none else false %}
 
       <a href="{{ url_for('main.jogo', fixture_id=f.id) }}" class="fixture-card">
 

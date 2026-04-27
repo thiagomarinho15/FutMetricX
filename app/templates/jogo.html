@@ -907,8 +907,10 @@ function gerarRelatorio(fixtureId, tipo, mode) {
   const outputEl = document.getElementById('output-' + tipo);
   const btnEl    = document.getElementById('btn-gerar-' + tipo);
   const loadEl   = document.getElementById('loading-' + tipo);
-  const cardEl   = document.getElementById(mode + '-report-card') ||
-                   document.getElementById('locutor-report-card');
+  // Use tipo-specific card to avoid showing the wrong panel
+  const cardEl   = tipo === 'locutor'
+    ? document.getElementById('locutor-report-card')
+    : document.getElementById(mode + '-report-card');
 
   if (!outputEl) return;
   if (btnEl) btnEl.disabled = true;
