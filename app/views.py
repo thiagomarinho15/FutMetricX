@@ -112,34 +112,50 @@ def sair():
 @bp.route('/')
 def index():
     from datetime import datetime, timezone, timedelta
-    from .models import Fixture, Competition, Team
+    from sqlalchemy import func
+    from .models import Fixture, Competition
 
     date_str = request.args.get('date')
     comp_filter = request.args.get('filter', '').strip()
     today = datetime.now(timezone.utc).date()
+
     try:
         selected_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else today
     except ValueError:
         selected_date = today
 
-    day_start = datetime(selected_date.year, selected_date.month, selected_date.day,
-                         tzinfo=timezone.utc)
+    # Build base query filtered by competition name when requested
+    def _base_query(comp):
+        q = Fixture.query
+        if comp:
+            q = q.join(Competition, Fixture.competition_id == Competition.id).filter(
+                Competition.name.ilike(f'%{comp}%')
+            )
+        return q
+
+    day_start = datetime(selected_date.year, selected_date.month, selected_date.day, tzinfo=timezone.utc)
     day_end = day_start + timedelta(days=1)
+    fixtures = _base_query(comp_filter).filter(
+        Fixture.scheduled_at >= day_start,
+        Fixture.scheduled_at < day_end,
+    ).order_by(Fixture.scheduled_at).all()
 
-    query = (
-        Fixture.query
-        .filter(Fixture.scheduled_at >= day_start, Fixture.scheduled_at < day_end)
-    )
-
-    # Apply competition filter when provided via sidebar links
-    if comp_filter:
-        query = query.join(Competition, Fixture.competition_id == Competition.id).filter(
-            Competition.name.ilike(f'%{comp_filter}%')
+    # When competition filter active but no games today, jump to nearest upcoming date
+    if comp_filter and not fixtures and not date_str:
+        nearest = (
+            _base_query(comp_filter)
+            .filter(Fixture.scheduled_at >= datetime.now(timezone.utc))
+            .order_by(Fixture.scheduled_at)
+            .first()
         )
+        if nearest and nearest.scheduled_at:
+            nearest_date = nearest.scheduled_at.date()
+            if nearest_date != selected_date:
+                return redirect(url_for('main.index',
+                                        filter=comp_filter,
+                                        date=nearest_date.isoformat()))
 
-    fixtures = query.order_by(Fixture.scheduled_at).all()
-
-    # Group by competition name preserving order of first appearance
+    # Group by competition preserving order of first appearance
     groups: dict[str, dict] = {}
     for f in fixtures:
         comp_name = f.competition.name if f.competition else 'Outras'
@@ -147,10 +163,9 @@ def index():
             groups[comp_name] = {'fixtures': [], 'competition': f.competition}
         groups[comp_name]['fixtures'].append(f)
 
-    # Build date strip: yesterday, today, next 5 days
+    # Date strip: yesterday + today + next 5 days
     dates = [today + timedelta(days=i) for i in range(-1, 6)]
 
-    # Recent results for sidebar (last 5 finished fixtures across all comps)
     recent = (
         Fixture.query
         .filter(Fixture.status == 'finished')
@@ -171,7 +186,7 @@ def index():
 @bp.route('/jogo/<int:fixture_id>')
 def jogo(fixture_id):
     from sqlalchemy import or_
-    f = Fixture.query.get_or_404(fixture_id)
+    f = db.get_or_404(Fixture, fixture_id)
 
     home_stats = (MatchStats.query
                   .filter_by(fixture_id=fixture_id, team_id=f.home_team_id)
@@ -231,7 +246,7 @@ def jogo(fixture_id):
 def gerar_relatorio_fixture(fixture_id):
     from .services.report_generator import gerar_relatorio_stream, montar_contexto_fixture
 
-    fixture_obj = Fixture.query.get_or_404(fixture_id)
+    fixture_obj = db.get_or_404(Fixture, fixture_id)
     tipo = request.args.get('tipo', 'pre_torcedor')
 
     _PRO_TIPOS = ('pre_profissional', 'locutor')
@@ -272,7 +287,7 @@ def gerar_relatorio_fixture(fixture_id):
 
 @bp.route('/partida/<int:partida_id>')
 def partida(partida_id):
-    p = Partida.query.get_or_404(partida_id)
+    p = db.get_or_404(Partida, partida_id)
     rels = {r.tipo: r for r in Relatorio.query.filter_by(partida_id=partida_id).all()}
     jogadores_casa = Jogador.query.filter_by(time_atual=p.time_casa).order_by(Jogador.nome).limit(25).all()
     jogadores_vis  = Jogador.query.filter_by(time_atual=p.time_visitante).order_by(Jogador.nome).limit(25).all()
@@ -282,7 +297,7 @@ def partida(partida_id):
 
 @bp.route('/jogador/<int:jogador_id>')
 def jogador(jogador_id):
-    j = Jogador.query.get_or_404(jogador_id)
+    j = db.get_or_404(Jogador, jogador_id)
     rel = Relatorio.query.filter_by(jogador_id=jogador_id, tipo='perfil_jogador').first()
     return render_template('jogador.html', jogador=j, relatorio=rel)
 
@@ -292,7 +307,7 @@ def jogador(jogador_id):
 def gerar_perfil_jogador(jogador_id):
     from .services.report_generator import gerar_relatorio_stream, montar_contexto_jogador
 
-    j = Jogador.query.get_or_404(jogador_id)
+    j = db.get_or_404(Jogador, jogador_id)
 
     existing = Relatorio.query.filter_by(jogador_id=jogador_id, tipo='perfil_jogador').first()
     if existing:
@@ -358,7 +373,7 @@ def noticias():
 def analisar_impacto(noticia_id):
     from .services.report_generator import gerar_relatorio_stream
 
-    n = Noticia.query.get_or_404(noticia_id)
+    n = db.get_or_404(Noticia, noticia_id)
 
     if n.impacto_processado and n.resumo_impacto:
         def _cached():
@@ -416,7 +431,7 @@ def brasileiros():
 def retrospecto(partida_id):
     from .services.report_generator import gerar_relatorio_stream
 
-    p = Partida.query.get_or_404(partida_id)
+    p = db.get_or_404(Partida, partida_id)
     existing = (
         ContextoHistorico.query
         .filter(
@@ -473,7 +488,7 @@ def server_error(e):
 def gerar_relatorio(partida_id):
     from .services.report_generator import gerar_relatorio_stream, montar_contexto
 
-    partida_obj = Partida.query.get_or_404(partida_id)
+    partida_obj = db.get_or_404(Partida, partida_id)
     tipo = request.args.get('tipo', 'pre_torcedor')
 
     # Tier gate: professional modes require pro+

@@ -259,7 +259,8 @@
     {{ live_count.n }} ao vivo
   </span>
   {% endif %}
-  <small>{{ selected_date.strftime('%d de %B, %Y') }}</small>
+  {% set _meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] %}
+  <small>{{ selected_date.day }} de {{ _meses[selected_date.month - 1] }}, {{ selected_date.year }}</small>
   {% if active_filter %}
   <a href="{{ url_for('main.index') }}?date={{ selected_date.strftime('%Y-%m-%d') }}"
      style="font-size:.75rem; color:var(--text-muted); margin-left:4px;">✕ limpar filtro</a>
