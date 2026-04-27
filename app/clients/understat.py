@@ -79,3 +79,33 @@ def get_match_shots(match_id: int) -> dict:
         return {}
     data = _extract(html, 'shotsData')
     return data if isinstance(data, dict) else {}
+
+
+def get_player_history(player_id: int) -> list[dict]:
+    """Return per-season xG history for a player from Understat."""
+    html = _fetch(f"{BASE_URL}/player/{player_id}")
+    if not html:
+        return []
+    data = _extract(html, 'groupsData')
+    if not isinstance(data, dict):
+        return []
+    # groupsData is keyed by season year string e.g. "2023"
+    history = []
+    for season_str, entries in data.items():
+        if isinstance(entries, list) and entries:
+            agg = entries[0] if len(entries) == 1 else _aggregate_season(entries)
+            agg['season'] = season_str
+            history.append(agg)
+    return history
+
+
+def _aggregate_season(entries: list[dict]) -> dict:
+    """Sum numeric fields across multiple club stints in one season."""
+    result: dict = {}
+    for entry in entries:
+        for k, v in entry.items():
+            try:
+                result[k] = float(result.get(k, 0)) + float(v)
+            except (TypeError, ValueError):
+                result.setdefault(k, v)
+    return result

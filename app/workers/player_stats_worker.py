@@ -109,3 +109,57 @@ def _pct(val) -> float | None:
         return float(str(val).replace('%', ''))
     except (ValueError, TypeError):
         return None
+
+
+def enrich_xg_for_fixture(fixture_id: int) -> int:
+    """Worker 3 post-match extension: complement MatchStats with Understat xG.
+
+    Understat usually publishes match xG 2-4 hours after the final whistle.
+    Call this after the base stats are already written.
+    """
+    from ..clients.understat import get_match_shots
+    from ..models import MatchStats, Fixture, AdvancedMetrics
+
+    fixture = Fixture.query.get(fixture_id)
+    if not fixture or not fixture.source_id:
+        return 0
+
+    shots_data = get_match_shots(int(fixture.source_id))
+    if not shots_data:
+        return 0
+
+    updated = 0
+    for side, shots in shots_data.items():
+        if not isinstance(shots, list):
+            continue
+        # aggregate xG per player
+        player_xg: dict[str, float] = {}
+        for shot in shots:
+            pid = str(shot.get('player_id', ''))
+            if pid:
+                player_xg[pid] = player_xg.get(pid, 0.0) + float(shot.get('xG', 0))
+
+        for understat_pid, xg_val in player_xg.items():
+            from ..models import PlayerIdMapping
+            mapping = PlayerIdMapping.query.filter_by(
+                source='understat', external_id=understat_pid,
+            ).first()
+            if not mapping:
+                continue
+
+            existing = AdvancedMetrics.query.filter_by(
+                fixture_id=fixture_id, player_id=mapping.player_id,
+            ).first()
+            if existing:
+                existing.xg = xg_val
+            else:
+                db.session.add(AdvancedMetrics(
+                    fixture_id=fixture_id,
+                    player_id=mapping.player_id,
+                    xg=xg_val,
+                    source_name='understat',
+                ))
+            updated += 1
+
+    db.session.commit()
+    return updated

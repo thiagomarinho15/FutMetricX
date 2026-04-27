@@ -212,7 +212,11 @@ def _stream_ollama(prompt: str, host: str, model: str):
 
 def gerar_relatorio_stream(tipo: str, ctx: dict):
     """Yield text chunks from the best available provider."""
-    prompt = _montar_prompt(tipo, ctx)
+    # Allow callers to bypass prompt templating with a raw prompt
+    if '_prompt_override' in ctx:
+        prompt = ctx['_prompt_override']
+    else:
+        prompt = _montar_prompt(tipo, ctx)
 
     # --- Groq (primary) ---
     groq_model = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')

@@ -94,3 +94,20 @@ def get_fixture_players(fixture_id: int) -> list[dict]:
 
 def get_fixture_lineups(fixture_id: int) -> list[dict]:
     return _get('fixtures/lineups', {'fixture': fixture_id}).get('response', [])
+
+
+def get_squad(team_id: int, season: int) -> list[dict]:
+    """Return full squad list for a team in a given season."""
+    return _get('players/squads', {'team': team_id, 'season': season}).get('response', [])
+
+
+def get_player_season_stats(player_id: int, season: int, league_id: int) -> dict:
+    """Return the first response block for a player's season aggregated stats."""
+    resp = _get('players', {'id': player_id, 'season': season, 'league': league_id}).get('response', [])
+    return resp[0] if resp else {}
+
+
+def get_player_info(player_id: int, season: int) -> dict:
+    """Return player identity + stats from the most recent available season."""
+    resp = _get('players', {'id': player_id, 'season': season}).get('response', [])
+    return resp[0] if resp else {}

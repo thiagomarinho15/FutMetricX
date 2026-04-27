@@ -134,9 +134,98 @@ def init_scheduler(app):
     _scheduler.add_job(_team_form, 'cron', hour=4, minute=0,
                        id='team_form_worker', replace_existing=True)
 
+    # ── Player Data Layer workers ──────────────────────────────────────────────
+
+    def _player_season_stats():
+        with app.app_context():
+            from ..workers.player_season_stats_worker import run
+            try:
+                n = run()
+                if n:
+                    logger.info('player_season_stats_worker: %d upserted', n)
+            except Exception as e:
+                logger.error('player_season_stats_worker: %s', e)
+
+    # every Monday 05:00 UTC — after xg_worker (02:00) and FBref (Sun night)
+    _scheduler.add_job(_player_season_stats, 'cron', day_of_week='mon', hour=5, minute=0,
+                       id='player_season_stats_worker', replace_existing=True)
+
+    def _player_market_value():
+        with app.app_context():
+            from ..workers.player_market_value_worker import run
+            try:
+                n = run()
+                if n:
+                    logger.info('player_market_value_worker: %d values recorded', n)
+            except Exception as e:
+                logger.error('player_market_value_worker: %s', e)
+
+    # every Monday 06:00 UTC
+    _scheduler.add_job(_player_market_value, 'cron', day_of_week='mon', hour=6, minute=0,
+                       id='player_market_value_worker', replace_existing=True)
+
+    def _player_fbref():
+        with app.app_context():
+            from ..workers.player_fbref_worker import run
+            try:
+                n = run()
+                if n:
+                    logger.info('player_fbref_worker: %d updated', n)
+            except Exception as e:
+                logger.error('player_fbref_worker: %s', e)
+
+    # every Sunday 23:00 UTC — FBref data is usually fresh by end of matchweek
+    _scheduler.add_job(_player_fbref, 'cron', day_of_week='sun', hour=23, minute=0,
+                       id='player_fbref_worker', replace_existing=True)
+
+    def _player_photos():
+        with app.app_context():
+            from ..workers.player_photo_worker import run
+            try:
+                n = run(limit=50)
+                if n:
+                    logger.info('player_photo_worker: %d photos processed', n)
+            except Exception as e:
+                logger.error('player_photo_worker: %s', e)
+
+    # every Sunday 22:00 UTC — backfill photos for new players
+    _scheduler.add_job(_player_photos, 'cron', day_of_week='sun', hour=22, minute=0,
+                       id='player_photo_worker', replace_existing=True)
+
+    def _player_bio():
+        with app.app_context():
+            from ..workers.player_bio_worker import run
+            try:
+                n = run()
+                if n:
+                    logger.info('player_bio_worker: %d bios generated', n)
+            except Exception as e:
+                logger.error('player_bio_worker: %s', e)
+
+    # 1st of each month at 07:00 UTC
+    _scheduler.add_job(_player_bio, 'cron', day=1, hour=7, minute=0,
+                       id='player_bio_worker', replace_existing=True)
+
+    def _player_percentiles():
+        with app.app_context():
+            from ..workers.player_percentiles_worker import run
+            try:
+                n = run()
+                if n:
+                    logger.info('player_percentiles_worker: %d rows updated', n)
+            except Exception as e:
+                logger.error('player_percentiles_worker: %s', e)
+
+    # every Tuesday 03:00 UTC — after Monday's season stats and market value are fresh
+    _scheduler.add_job(_player_percentiles, 'cron', day_of_week='tue', hour=3, minute=0,
+                       id='player_percentiles_worker', replace_existing=True)
+
     _scheduler.start()
     logger.info(
         'APScheduler iniciado: news(30min), pregame(00:00), '
         'fixtures(03:00), livescore(1min), player_stats(6h), '
-        'xg(seg 02:00), conflicts(1h), team_form(04:00)'
+        'xg(seg 02:00), conflicts(1h), team_form(04:00) | '
+        'player_season_stats(seg 05:00), market_value(seg 06:00), '
+        'fbref(dom 23:00), photos(dom 22:00), bio(dia1 07:00), '
+        'percentiles(ter 03:00)'
     )

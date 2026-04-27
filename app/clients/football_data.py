@@ -86,3 +86,17 @@ def get_fixtures(competition_id: int, season: int | None = None,
 def get_standings(competition_id: int) -> dict:
     data = _get(f"competitions/{competition_id}/standings")
     return data if isinstance(data, dict) else {}
+
+
+def get_live_matches() -> list[dict]:
+    """Return ALL currently live matches across every tracked competition in ONE request."""
+    data = _get("matches", {"status": "IN_PLAY"})
+    return data.get("matches", []) if isinstance(data, dict) else []
+
+
+def get_matches_today() -> list[dict]:
+    """Return all matches scheduled for today (any status) in ONE request."""
+    from datetime import date
+    today = date.today().isoformat()
+    data = _get("matches", {"dateFrom": today, "dateTo": today})
+    return data.get("matches", []) if isinstance(data, dict) else []
