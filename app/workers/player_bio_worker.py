@@ -10,9 +10,9 @@ from datetime import datetime, timezone
 from ..models import db, Player, PlayerSeasonStats, PlayerMarketValue
 from ..services.report_generator import gerar_relatorio_stream
 
-logger = logging.getLogger(__name__)
+from ..season_config import SEASON_LABEL_EUROPE as SEASON_LABEL
 
-SEASON_LABEL = '2024-25'
+logger = logging.getLogger(__name__)
 
 
 def run(player_ids: list[int] | None = None, force: bool = False) -> int:

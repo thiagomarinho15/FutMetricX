@@ -3,7 +3,7 @@ from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 
-from .models import db, User, Role, Partida, Jogador, Relatorio, Noticia, ContextoHistorico
+from .models import db, User, Role, Partida, Jogador, Relatorio, Noticia, ContextoHistorico, WorkerLog, Team, Player, Competition
 
 
 class AdminAccessMixin:
@@ -66,6 +66,35 @@ class ContextoHistoricoAdmin(AdminAccessMixin, ModelView):
     column_searchable_list = ('time1', 'time2')
 
 
+class WorkerLogAdmin(AdminAccessMixin, ModelView):
+    column_list = ('id', 'worker_name', 'status', 'started_at', 'finished_at', 'rows_affected', 'error_msg')
+    column_filters = ('status', 'worker_name')
+    column_default_sort = ('started_at', True)
+    can_create = False
+    can_edit = False
+
+
+class TeamAdmin(AdminAccessMixin, ModelView):
+    column_list = ('id', 'name', 'short_name', 'country', 'source_name', 'source_id', 'logo_url', 'updated_at')
+    column_searchable_list = ('name', 'source_id')
+    column_filters = ('source_name', 'country')
+    can_create = False
+
+
+class PlayerAdmin(AdminAccessMixin, ModelView):
+    column_list = ('id', 'name', 'position', 'nationality', 'age', 'team_id', 'source_name', 'is_active', 'updated_at')
+    column_searchable_list = ('name', 'source_id')
+    column_filters = ('source_name', 'position', 'is_active')
+    can_create = False
+
+
+class CompetitionAdmin(AdminAccessMixin, ModelView):
+    column_list = ('id', 'name', 'season', 'country', 'source_name')
+    column_searchable_list = ('name',)
+    column_filters = ('season', 'source_name')
+    can_create = False
+
+
 def init_admin(app):
     admin = Admin(
         app,
@@ -75,9 +104,13 @@ def init_admin(app):
     )
     admin.add_view(UserAdmin(User, db.session, name='Usuários'))
     admin.add_view(RoleAdmin(Role, db.session, name='Roles'))
-    admin.add_view(PartidaAdmin(Partida, db.session, name='Partidas'))
-    admin.add_view(JogadorAdmin(Jogador, db.session, name='Jogadores'))
+    admin.add_view(CompetitionAdmin(Competition, db.session, name='Competições', category='Dados'))
+    admin.add_view(TeamAdmin(Team, db.session, name='Times', category='Dados'))
+    admin.add_view(PlayerAdmin(Player, db.session, name='Jogadores (atual)', category='Dados'))
+    admin.add_view(PartidaAdmin(Partida, db.session, name='Partidas (legado)', category='Dados'))
+    admin.add_view(JogadorAdmin(Jogador, db.session, name='Jogadores (legado)', category='Dados'))
     admin.add_view(RelatorioAdmin(Relatorio, db.session, name='Relatórios'))
     admin.add_view(NoticiaAdmin(Noticia, db.session, name='Notícias'))
     admin.add_view(ContextoHistoricoAdmin(ContextoHistorico, db.session, name='Histórico'))
+    admin.add_view(WorkerLogAdmin(WorkerLog, db.session, name='Workers', category='Sistema'))
     return admin

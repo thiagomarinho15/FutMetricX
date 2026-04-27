@@ -10,10 +10,9 @@ from ..models import db, Competition, Team, Player
 from ..clients import api_football, thesportsdb
 from ..utils.player_utils import normalize_player_name
 
-logger = logging.getLogger(__name__)
+from ..season_config import CURRENT_SEASON_YEAR as CURRENT_SEASON
 
-# Current season year for API-Football
-CURRENT_SEASON = 2024
+logger = logging.getLogger(__name__)
 
 
 def run(competition_name: str | None = None) -> int:

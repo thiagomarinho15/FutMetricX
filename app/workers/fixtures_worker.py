@@ -4,10 +4,9 @@ from datetime import datetime, timezone
 
 from ..models import db, Competition, Team, Fixture
 from ..clients.football_data import get_fixtures, COMPETITION_IDS, STATUS_MAP
+from ..season_config import CURRENT_SEASON_YEAR as CURRENT_SEASON, season_label
 
 logger = logging.getLogger(__name__)
-
-CURRENT_SEASON = 2025
 
 
 def run(season: int = CURRENT_SEASON) -> int:
@@ -26,11 +25,12 @@ def run(season: int = CURRENT_SEASON) -> int:
 
 
 def _get_or_create_competition(name: str, fd_id: int, season: int) -> Competition:
-    comp = Competition.query.filter_by(name=name, season=str(season)).first()
+    s_label = season_label(name)
+    comp = Competition.query.filter_by(name=name, season=s_label).first()
     if not comp:
         comp = Competition(
             name=name,
-            season=str(season),
+            season=s_label,
             source_id=str(fd_id),
             source_name='football-data',
         )

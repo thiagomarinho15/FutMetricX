@@ -51,6 +51,9 @@ def create_app():
     from .views import bp
     app.register_blueprint(bp)
 
+    from .workers_api import workers_bp
+    app.register_blueprint(workers_bp)
+
     init_scheduler(app)
 
     @app.after_request

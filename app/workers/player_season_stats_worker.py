@@ -9,10 +9,9 @@ from ..models import db, Player, Competition, PlayerSeasonStats, PlayerIdMapping
 from ..clients import api_football, understat
 from ..utils.player_utils import calc_per90, normalize_player_name
 
-logger = logging.getLogger(__name__)
+from ..season_config import CURRENT_SEASON_YEAR as CURRENT_SEASON, season_label
 
-CURRENT_SEASON = 2024
-SEASON_LABEL = '2024-25'
+logger = logging.getLogger(__name__)
 
 
 def run(competition_name: str | None = None) -> int:
@@ -113,17 +112,18 @@ def _upsert_player_season(player: Player, comp: Competition, league_id: int,
         player.external_id_understat = int(xg_data['id'])
         _upsert_id_mapping(player.id, 'understat', str(xg_data['id']))
 
+    s_label = season_label(comp.name)
     row = PlayerSeasonStats.query.filter_by(
         player_id=player.id,
         competition_id=comp.id,
-        season=SEASON_LABEL,
+        season=s_label,
     ).first()
 
     if not row:
         row = PlayerSeasonStats(
             player_id=player.id,
             competition_id=comp.id,
-            season=SEASON_LABEL,
+            season=s_label,
         )
         db.session.add(row)
 

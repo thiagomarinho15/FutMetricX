@@ -9,10 +9,11 @@ from ..models import db, Competition, Player, PlayerSeasonStats
 from ..clients.fbref_client import get_player_stats, FBREF_LEAGUES
 from ..utils.player_utils import normalize_player_name
 
+from ..season_config import CURRENT_SEASON_YEAR, season_label
+
 logger = logging.getLogger(__name__)
 
-SEASON_YEAR = '2024'
-SEASON_LABEL = '2024-25'
+SEASON_YEAR = str(CURRENT_SEASON_YEAR)
 
 
 def run(league: str | None = None) -> int:
@@ -57,7 +58,7 @@ def _process_league(league_name: str) -> int:
         row = PlayerSeasonStats.query.filter_by(
             player_id=player.id,
             competition_id=comp.id,
-            season=SEASON_LABEL,
+            season=season_label(league_name),
         ).first()
         if not row:
             continue

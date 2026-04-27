@@ -10,9 +10,9 @@ from datetime import datetime, timezone
 from ..models import db, Competition, PlayerSeasonStats, PlayerPercentiles, Player
 from ..utils.player_utils import position_group
 
-logger = logging.getLogger(__name__)
+from ..season_config import season_label
 
-SEASON_LABEL = '2024-25'
+logger = logging.getLogger(__name__)
 MIN_MINUTES = 90  # exclude players with <90 min to avoid skewed distributions
 
 METRICS: list[str] = [
@@ -52,9 +52,10 @@ def run() -> int:
 
 
 def _process_competition(comp: Competition) -> int:
+    s_label = season_label(comp.name)
     rows = (
         PlayerSeasonStats.query
-        .filter_by(competition_id=comp.id, season=SEASON_LABEL)
+        .filter_by(competition_id=comp.id, season=s_label)
         .filter(PlayerSeasonStats.minutes_played >= MIN_MINUTES)
         .all()
     )
@@ -70,11 +71,11 @@ def _process_competition(comp: Competition) -> int:
 
     updated = 0
     for grp, grp_rows in groups.items():
-        updated += _rank_group(comp.id, grp, grp_rows)
+        updated += _rank_group(comp.id, grp, grp_rows, s_label)
     return updated
 
 
-def _rank_group(comp_id: int, grp: str, rows: list[PlayerSeasonStats]) -> int:
+def _rank_group(comp_id: int, grp: str, rows: list[PlayerSeasonStats], s_label: str) -> int:
     n = len(rows)
     if n < 2:
         return 0
@@ -94,13 +95,13 @@ def _rank_group(comp_id: int, grp: str, rows: list[PlayerSeasonStats]) -> int:
         pct_row = PlayerPercentiles.query.filter_by(
             player_id=row.player_id,
             competition_id=comp_id,
-            season=SEASON_LABEL,
+            season=s_label,
         ).first()
         if not pct_row:
             pct_row = PlayerPercentiles(
                 player_id=row.player_id,
                 competition_id=comp_id,
-                season=SEASON_LABEL,
+                season=s_label,
                 position_group=grp,
             )
             db.session.add(pct_row)

@@ -35,6 +35,9 @@ class Team(db.Model):
     competition_id = db.Column(db.Integer, db.ForeignKey('competitions.id'))
     source_id = db.Column(db.String(50))
     source_name = db.Column(db.String(50))
+    logo_url = db.Column(db.String(500))
+    banner_url = db.Column(db.String(500))
+    canonical_team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
@@ -445,6 +448,21 @@ class PlayerPercentiles(db.Model):
 
     def __repr__(self):
         return f'<PlayerPercentiles player={self.player_id} season={self.season}>'
+
+
+class WorkerLog(db.Model):
+    """Execution log for background data workers."""
+    __tablename__ = 'worker_log'
+    id = db.Column(db.Integer, primary_key=True)
+    worker_name = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(20), default='running')  # running | done | error
+    started_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    finished_at = db.Column(db.DateTime, nullable=True)
+    rows_affected = db.Column(db.Integer, nullable=True)
+    error_msg = db.Column(db.Text, nullable=True)
+
+    def __repr__(self):
+        return f'<WorkerLog {self.worker_name} {self.status}>'
 
 
 class PlayerIdMapping(db.Model):

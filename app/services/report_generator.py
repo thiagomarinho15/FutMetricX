@@ -92,6 +92,43 @@ def _montar_prompt(tipo: str, ctx: dict) -> str:
             "Responda em português do Brasil. Máximo 300 palavras."
         )
 
+    def _fmt_players(players: list) -> str:
+        if not players:
+            return '  (sem dados disponíveis)'
+        lines = []
+        for p in players:
+            base = f"  {p.get('nome','?')} ({p.get('posicao','?')}) — {p.get('gols',0)}G {p.get('assistencias',0)}A"
+            if p.get('xg'):
+                base += f" xG:{p['xg']:.2f}"
+            lines.append(base)
+        return '\n'.join(lines)
+
+    def _fmt_form(form: dict, team: str) -> str:
+        if not form:
+            return f'  {team}: sem dados de forma'
+        return (
+            f"  {team}: {form.get('ultimos_5', '?')} | "
+            f"{form.get('vitorias',0)}V {form.get('empates',0)}E {form.get('derrotas',0)}D | "
+            f"GF:{form.get('gols_marcados',0)} GC:{form.get('gols_sofridos',0)}"
+            + (f" | xG:{form['xg_medio']:.2f}" if form.get('xg_medio') else '')
+        )
+
+    form_section = ''
+    players_section = ''
+    if ctx.get('form_casa') or ctx.get('form_visitante'):
+        form_section = (
+            '\nForma recente:\n'
+            + _fmt_form(ctx.get('form_casa', {}), ctx['time_casa']) + '\n'
+            + _fmt_form(ctx.get('form_visitante', {}), ctx['time_visitante'])
+        )
+    if ctx.get('destaques_casa') or ctx.get('destaques_visitante'):
+        players_section = (
+            f"\nDestaques {ctx['time_casa']} (2025-26):\n"
+            + _fmt_players(ctx.get('destaques_casa', []))
+            + f"\nDestaques {ctx['time_visitante']} (2025-26):\n"
+            + _fmt_players(ctx.get('destaques_visitante', []))
+        )
+
     info = (
         f"Partida: {ctx['time_casa']} vs {ctx['time_visitante']}\n"
         f"Competição: {ctx['competicao']} | Temporada: {ctx['temporada']}"
@@ -101,6 +138,8 @@ def _montar_prompt(tipo: str, ctx: dict) -> str:
             f"\nResultado: {ctx['placar_casa']} x {ctx['placar_visitante']}"
             if ctx.get('placar_casa') is not None else ''
         )
+        + form_section
+        + players_section
     )
 
     templates = {

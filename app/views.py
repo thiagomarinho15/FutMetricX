@@ -11,9 +11,10 @@ from flask import (
 )
 from flask_login import login_user, logout_user, login_required, current_user
 
-from .models import db, User, Partida, Jogador, Relatorio, Noticia, ContextoHistorico, Fixture, MatchStats, TeamForm
+from .models import db, User, Partida, Jogador, Relatorio, Noticia, ContextoHistorico, Fixture, MatchStats, TeamForm, Player, Competition
 from .forms import LoginForm, CadastroForm
 from .security import hash_senha, verificar_senha
+from .season_config import season_label, SEASON_LABEL_EUROPE, SEASON_LABEL_BRASIL
 
 logger = logging.getLogger(__name__)
 
@@ -244,7 +245,8 @@ def jogo(fixture_id):
 @bp.route('/jogo/<int:fixture_id>/gerar')
 @login_required
 def gerar_relatorio_fixture(fixture_id):
-    from .services.report_generator import gerar_relatorio_stream, montar_contexto_fixture
+    from .services.report_generator import gerar_relatorio_stream
+    from .services.context_builder import build_fixture_context
 
     fixture_obj = db.get_or_404(Fixture, fixture_id)
     tipo = request.args.get('tipo', 'pre_torcedor')
@@ -261,7 +263,7 @@ def gerar_relatorio_fixture(fixture_id):
             yield f"data: {json.dumps({'texto': existing.conteudo, 'done': True})}\n\n"
         return Response(_cached(), content_type='text/event-stream')
 
-    ctx = montar_contexto_fixture(fixture_obj)
+    ctx = build_fixture_context(fixture_obj)
 
     def _stream():
         chunks = []
@@ -410,16 +412,44 @@ def analisar_impacto(noticia_id):
 
 @bp.route('/brasileiros')
 def brasileiros():
+    from sqlalchemy import or_
+    # Prioritise current-season Player records (api-football source)
     jogadores = (
-        Jogador.query
-        .filter(Jogador.nacionalidade.ilike('%Brazil%'))
-        .order_by(Jogador.time_atual, Jogador.nome)
+        Player.query
+        .filter(
+            Player.source_name == 'api-football',
+            Player.is_active.is_(True),
+            or_(
+                Player.nationality.ilike('%Brazil%'),
+                Player.nationality_iso2 == 'BR',
+            ),
+        )
+        .order_by(Player.team_id, Player.name)
         .all()
     )
+
     times: dict[str, list] = {}
     for j in jogadores:
-        times.setdefault(j.time_atual or 'Outros', []).append(j)
-    return render_template('brasileiros.html', times=times, total=len(jogadores))
+        team_name = 'Outros'
+        if j.team_id:
+            team = Team.query.get(j.team_id)
+            if team:
+                team_name = team.name
+        times.setdefault(team_name, []).append(j)
+
+    # Fallback to legacy Jogador if no current data available
+    if not jogadores:
+        legacy = (
+            Jogador.query
+            .filter(Jogador.nacionalidade.ilike('%Brazil%'))
+            .order_by(Jogador.time_atual, Jogador.nome)
+            .all()
+        )
+        for j in legacy:
+            times.setdefault(j.time_atual or 'Outros', []).append(j)
+        return render_template('brasileiros.html', times=times, total=len(legacy), legacy=True)
+
+    return render_template('brasileiros.html', times=times, total=len(jogadores), legacy=False)
 
 
 # ---------------------------------------------------------------------------

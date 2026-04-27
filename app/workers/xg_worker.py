@@ -1,13 +1,17 @@
-"""Fetches xG, xA, npxG and related metrics from Understat (primary for advanced metrics)."""
+"""Fetches xG, xA, npxG and related metrics from Understat (primary for advanced metrics).
+
+Also cross-references existing api-football Player records by name and updates
+their external_id_understat for future lookups.
+"""
 import logging
 from datetime import datetime, timezone
 
-from ..models import db, Competition, Player, Team, AdvancedMetrics
+from ..models import db, Competition, Player, Team, AdvancedMetrics, PlayerSeasonStats, PlayerIdMapping
 from ..clients.understat import get_league_players, LEAGUES
+from ..season_config import CURRENT_SEASON_YEAR as CURRENT_SEASON, season_label
+from ..utils.player_utils import normalize_player_name
 
 logger = logging.getLogger(__name__)
-
-CURRENT_SEASON = 2025
 
 
 def run(league: str | None = None, season: int = CURRENT_SEASON) -> int:
@@ -33,24 +37,25 @@ def _process_league(league: str, season: int) -> int:
     if not players_data:
         return 0
 
-    comp = Competition.query.filter_by(name=league, season=str(season)).first()
+    s_label = season_label(league)
+    comp = Competition.query.filter_by(name=league, season=s_label).first()
     added = 0
 
     for p_data in players_data:
-        player = _get_or_create_player(p_data, comp)
-
-        # Understat delivers season totals; store with fixture_id=None
-        existing = AdvancedMetrics.query.filter_by(
-            player_id=player.id,
-            fixture_id=None,
-            source_name='understat',
-        ).first()
+        player = _resolve_player(p_data, comp)
 
         xg = _f(p_data.get('xG'))
         xa = _f(p_data.get('xA'))
         npxg = _f(p_data.get('npxG'))
         xg_chain = _f(p_data.get('xGChain'))
         xg_buildup = _f(p_data.get('xGBuildup'))
+
+        # Upsert AdvancedMetrics (season-aggregate, fixture_id=NULL)
+        existing = AdvancedMetrics.query.filter_by(
+            player_id=player.id,
+            fixture_id=None,
+            source_name='understat',
+        ).first()
 
         if existing:
             existing.xg = xg
@@ -72,30 +77,86 @@ def _process_league(league: str, season: int) -> int:
             ))
             added += 1
 
+        # Mirror xG into PlayerSeasonStats if row exists
+        if comp:
+            _sync_season_stats(player, comp, s_label, xg, xa, npxg, xg_chain, xg_buildup)
+
     db.session.commit()
     return added
 
 
-def _get_or_create_player(p_data: dict, comp: Competition | None) -> Player:
-    source_id = str(p_data.get('id', ''))
-    player = Player.query.filter_by(source_id=source_id, source_name='understat').first()
-    if not player:
-        team_name = p_data.get('team_title', '')
-        team = None
-        if comp and team_name:
-            team = Team.query.filter(
-                Team.name == team_name,
-                Team.competition_id == comp.id,
-            ).first()
-        player = Player(
-            name=p_data.get('player_name', ''),
-            team_id=team.id if team else None,
-            source_id=source_id,
-            source_name='understat',
-        )
-        db.session.add(player)
-        db.session.flush()
+def _resolve_player(p_data: dict, comp: Competition | None) -> Player:
+    """Try to find an api-football player by name; fallback to understat-sourced entry."""
+    understat_id = str(p_data.get('id', ''))
+    player_name = p_data.get('player_name', '')
+
+    # 1. Try existing understat-sourced Player record
+    player = Player.query.filter_by(source_id=understat_id, source_name='understat').first()
+    if player:
+        return player
+
+    # 2. Try to match an api-football player by normalised name and update its external_id
+    if player_name:
+        norm = normalize_player_name(player_name)
+        api_player = Player.query.filter_by(source_name='api-football').all()
+        for p in api_player:
+            if normalize_player_name(p.name) == norm:
+                if not p.external_id_understat and understat_id:
+                    p.external_id_understat = int(understat_id) if understat_id.isdigit() else None
+                    _upsert_id_mapping(p.id, 'understat', understat_id)
+                return p
+
+    # 3. Create a new understat-sourced player as fallback
+    team_name = p_data.get('team_title', '')
+    team = None
+    if comp and team_name:
+        team = Team.query.filter(
+            Team.name == team_name,
+            Team.competition_id == comp.id,
+        ).first()
+
+    player = Player(
+        name=player_name,
+        team_id=team.id if team else None,
+        source_id=understat_id,
+        source_name='understat',
+    )
+    db.session.add(player)
+    db.session.flush()
     return player
+
+
+def _sync_season_stats(
+    player: Player,
+    comp: Competition,
+    s_label: str,
+    xg, xa, npxg, xg_chain, xg_buildup,
+) -> None:
+    row = PlayerSeasonStats.query.filter_by(
+        player_id=player.id,
+        competition_id=comp.id,
+        season=s_label,
+    ).first()
+    if not row:
+        return
+    row.xg = xg
+    row.xa = xa
+    row.npxg = npxg
+    row.xg_chain = xg_chain
+    row.xg_buildup = xg_buildup
+    row.source_advanced = 'understat'
+    row.updated_at = datetime.now(timezone.utc)
+
+
+def _upsert_id_mapping(player_id: int, source: str, external_id: str) -> None:
+    existing = PlayerIdMapping.query.filter_by(source=source, external_id=external_id).first()
+    if not existing:
+        db.session.add(PlayerIdMapping(
+            player_id=player_id,
+            source=source,
+            external_id=external_id,
+            confidence='auto',
+        ))
 
 
 def _f(val) -> float | None:
