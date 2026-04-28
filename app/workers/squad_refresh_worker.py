@@ -1,20 +1,21 @@
-"""Worker 0 — Refresh squads and teams from API-Football for the current season.
+"""Worker 0 — Refresh squads and teams from API-Football (current season rosters).
 
-Fetches all teams per league, then all player squads. Upserts Teams and Players
-with the 2025/2026 roster. Also enriches Team logo_url via TheSportsDB.
+Free-tier constraints:
+  - GET /teams requires season ≤ 2024 → use SQUAD_API_SEASON=2024
+  - GET /players/squads works WITHOUT season param → returns most recent roster
+  - TheSportsDB: free, no auth, 1s between calls
 
-Rate limit: API-Football free tier = 100 req/day. Process one league at a time
-and use both API_FOOTBALL_KEY_1 / API_FOOTBALL_KEY_2 if available.
+Run once per competition to populate/update Teams and Players with the
+latest 2025-2026 rosters. Logo_url fetched from API-Football; if missing,
+falls back to TheSportsDB badge.
 """
 import logging
 import time
 from datetime import datetime, timezone
 
-import httpx
-
 from ..models import db, Competition, Team, Player
 from ..clients import api_football, thesportsdb
-from ..season_config import CURRENT_SEASON_YEAR, season_label
+from ..season_config import SQUAD_API_SEASON, season_label
 
 logger = logging.getLogger(__name__)
 
@@ -44,31 +45,36 @@ def run(competition_name: str | None = None) -> int:
 
 
 def _refresh_league(comp_name: str, league_id: int) -> int:
-    logger.info("squad_refresh: league=%s id=%d season=%d", comp_name, league_id, CURRENT_SEASON_YEAR)
+    logger.info("squad_refresh: league=%s id=%d (teams season=%d, squads=current)",
+                comp_name, league_id, SQUAD_API_SEASON)
 
     comp = _get_or_create_competition(comp_name, league_id)
+
+    # /teams requires season ≤ 2024 on free tier
     teams_data = _fetch_teams(league_id)
     if not teams_data:
-        logger.warning("squad_refresh: no teams returned for %s", comp_name)
+        logger.warning("squad_refresh: no teams returned for %s (league_id=%d)", comp_name, league_id)
         return 0
 
+    logger.info("squad_refresh: %s — %d times encontrados", comp_name, len(teams_data))
     total = 0
     for team_block in teams_data:
         team_info = team_block.get('team', {})
-        venue_info = team_block.get('venue', {})
         team = _upsert_team(team_info, comp)
         if not team:
             continue
-        total += _refresh_squad(team)
-        time.sleep(0.6)  # stay within rate limit
+        upserted = _refresh_squad(team)
+        total += upserted
+        logger.info("squad_refresh:   %s → %d jogadores", team.name, upserted)
+        time.sleep(0.6)
 
     db.session.flush()
     return total
 
 
 def _fetch_teams(league_id: int) -> list[dict]:
-    """GET /teams?league={id}&season={year}"""
-    resp = api_football._get('teams', {'league': league_id, 'season': CURRENT_SEASON_YEAR})
+    """GET /teams?league={id}&season={SQUAD_API_SEASON}  (free tier: season≤2024)."""
+    resp = api_football._get('teams', {'league': league_id, 'season': SQUAD_API_SEASON})
     return resp.get('response', [])
 
 
@@ -103,10 +109,12 @@ def _upsert_team(team_info: dict, comp: Competition) -> Team | None:
     team.country = team_info.get('country', '')
     team.competition_id = comp.id
 
+    # API-Football provides logo URL in the teams response
     logo = team_info.get('logo')
     if logo and not team.logo_url:
         team.logo_url = logo
 
+    # Fallback to TheSportsDB for teams still missing a logo
     if not team.logo_url:
         _enrich_team_logo(team)
 
@@ -116,6 +124,7 @@ def _upsert_team(team_info: dict, comp: Competition) -> Team | None:
 
 
 def _enrich_team_logo(team: Team) -> None:
+    time.sleep(1.0)
     info = thesportsdb.search_team(team.name)
     if not info:
         return
@@ -126,7 +135,9 @@ def _enrich_team_logo(team: Team) -> None:
 
 
 def _refresh_squad(team: Team) -> int:
-    blocks = api_football.get_squad(int(team.source_id), CURRENT_SEASON_YEAR)
+    """GET /players/squads?team={id}  (no season = most current roster)."""
+    resp = api_football._get('players/squads', {'team': int(team.source_id)})
+    blocks = resp.get('response', [])
     if not blocks:
         return 0
 
@@ -134,14 +145,14 @@ def _refresh_squad(team: Team) -> int:
     for block in blocks:
         players_raw.extend(block.get('players', []))
 
-    added = 0
+    upserted = 0
     for p_data in players_raw:
         try:
-            added += _upsert_player(p_data, team)
+            upserted += _upsert_player(p_data, team)
         except Exception as e:
             logger.warning("squad_refresh player %s: %s", p_data.get('name'), e)
 
-    return added
+    return upserted
 
 
 def _upsert_player(p_data: dict, team: Team) -> int:
@@ -172,10 +183,4 @@ def _upsert_player(p_data: dict, team: Team) -> int:
 
 
 def _map_position(raw: str) -> str:
-    mapping = {
-        'Goalkeeper': 'GK',
-        'Defender': 'DEF',
-        'Midfielder': 'MID',
-        'Attacker': 'ATT',
-    }
-    return mapping.get(raw, raw or 'UNK')
+    return {'Goalkeeper': 'GK', 'Defender': 'DEF', 'Midfielder': 'MID', 'Attacker': 'ATT'}.get(raw, raw or 'UNK')

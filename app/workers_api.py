@@ -21,6 +21,7 @@ _ALLOWED_WORKERS = {
     'fixtures',
     'xg',
     'player-seed',
+    'player-enrich',
     'team-dedup',
     'player-season-stats',
     'player-percentiles',
@@ -107,6 +108,9 @@ def _dispatch(worker_name: str, league: str | None) -> int:
     if worker_name == 'player-seed':
         from .workers.player_seed_worker import run
         return run(league)
+    if worker_name == 'player-enrich':
+        from .workers.player_enrich_worker import run
+        return run()
     if worker_name == 'team-dedup':
         from .workers.team_dedup_worker import run
         return run()

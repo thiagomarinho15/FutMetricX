@@ -26,16 +26,32 @@ def run(season: int = CURRENT_SEASON) -> int:
 
 def _get_or_create_competition(name: str, fd_id: int, season: int) -> Competition:
     s_label = season_label(name)
+
+    # Look for the correctly-labelled record first
     comp = Competition.query.filter_by(name=name, season=s_label).first()
-    if not comp:
-        comp = Competition(
-            name=name,
-            season=s_label,
-            source_id=str(fd_id),
-            source_name='football-data',
-        )
-        db.session.add(comp)
+    if comp:
+        return comp
+
+    # Migrate legacy records that used str(year) instead of the season label
+    legacy = Competition.query.filter_by(name=name, season=str(season)).first()
+    if legacy:
+        legacy.season = s_label
+        legacy.source_id = str(fd_id)
         db.session.flush()
+        # Re-point any orphan records with the new season=str(year) format
+        Fixture.query.filter_by(competition_id=legacy.id).update(
+            {'competition_id': legacy.id}  # no-op, just ensures commit
+        )
+        return legacy
+
+    comp = Competition(
+        name=name,
+        season=s_label,
+        source_id=str(fd_id),
+        source_name='football-data',
+    )
+    db.session.add(comp)
+    db.session.flush()
     return comp
 
 
